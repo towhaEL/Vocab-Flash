@@ -133,7 +133,23 @@ class _StatisticsState extends State<Statistics> {
                 _buildStatisticCard('Viewed', '$_viewedWords words', Colors.blue),
               ],
             ),
-            Expanded(child: _buildPieChart()),
+            Expanded(child: Column(
+              children: [
+                _buildPieChart(),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: 12,
+                      width: 12,
+                      color: Colors.red,
+                    ),
+                    Text('  Remaining words ${_totalWords - _memorizedWords - _viewedWords}'),
+                  ],
+                ),
+              ],
+            )),
           ],
         ),
       ],
@@ -141,17 +157,20 @@ class _StatisticsState extends State<Statistics> {
   }
 
   Widget _buildStatisticCard(String title, String value, [Color clr = Colors.white]) {
-    return Card(
-      color: clr,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 16)),
-          ],
+    return Container(
+      width: 120,
+      child: Card(
+        color: clr,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text(value, style: TextStyle(fontSize: 16)),
+            ],
+          ),
         ),
       ),
     );
@@ -163,9 +182,9 @@ class _StatisticsState extends State<Statistics> {
       child: PieChart(
         PieChartData(
           sections: [
-            PieChartSectionData(value: _memorizedWords.toDouble(), color: Colors.green, title: 'Memorized'),
-            PieChartSectionData(value: _viewedWords.toDouble(), color: Colors.blue, title: 'Viewed'),
-            PieChartSectionData(value: (_totalWords - _memorizedWords - _viewedWords).toDouble(), color: Colors.red, title: 'Remaining'),
+            PieChartSectionData(value: _memorizedWords.toDouble(), color: Colors.green, title: 'M'),
+            PieChartSectionData(value: _viewedWords.toDouble(), color: Colors.blue, title: 'V'),
+            PieChartSectionData(value: (_totalWords - _memorizedWords - _viewedWords).toDouble(), color: Colors.red, title: 'R'),
           ],
         ),
       ),
