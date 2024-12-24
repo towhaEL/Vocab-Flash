@@ -21,6 +21,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _fetchUserData();
   }
 
+  Future<void> _signOut() async {
+    await _auth.signOut();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   Future<void> _fetchUserData() async {
     _user = _auth.currentUser;
     if (_user != null) {
@@ -43,8 +48,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          // title: Text('Profile'),
-        ),
+        title: Text('User Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _signOut,
+          ),
+        ],
+      ),
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -52,6 +63,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Profile'),
+        backgroundColor: Colors.blue,
+        elevation: 5.0,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _signOut,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

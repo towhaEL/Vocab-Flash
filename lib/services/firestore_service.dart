@@ -312,5 +312,39 @@ class FirestoreService {
         return '';
     }
   }
+
+
+  // Quiz
+  Future<List<QueryDocumentSnapshot>> getVocabulary() async {
+    QuerySnapshot snapshot = await _db.collection('vocabulary').get();
+    return snapshot.docs;
+  }
+
+  Future<void> saveQuizResult(int score, int ques_num, double accuracy) async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      
+      await _db.collection('users').doc(user.uid).collection('quiz_results').add({
+        'score': score,
+        'questions': ques_num,
+        'accuracy': accuracy,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } else {
+      throw Exception('No user is currently signed in.');
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot>> getQuizResults() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      QuerySnapshot snapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
+      return snapshot.docs;
+    } else {
+      throw Exception('No user is currently signed in.');
+    }
+  }
+
+
   
 }

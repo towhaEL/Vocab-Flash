@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:vocabflashcard_app/screens/quiz_history.dart';
 import '../services/firestore_service.dart';
 
 class Statistics extends StatefulWidget {
@@ -17,6 +19,12 @@ class _StatisticsState extends State<Statistics> {
   int _viewedWords = 0;
   int _currentStreak = 0;
   int _longestStreak = 0;
+  int _quizAttempted = 0;
+  int _highScore = 0;
+  int _maxQues = 0;
+
+  double _averageScore = 0.0;
+
   Map<String, int> _weeklyWordCount = {
     'Mon': 0,
     'Tue': 0,
@@ -42,6 +50,25 @@ class _StatisticsState extends State<Statistics> {
       int viewedWords = await _firestoreService.getViewedWords(user.uid);
       Map<String, dynamic> streaks = await _firestoreService.getStreaks();
       Map<String, int> weeklyWordCount = await _firestoreService.getWeeklyWordCount();
+      List<QueryDocumentSnapshot> quizDocs = await _firestoreService.getQuizResults();
+
+      int highScore = 0;
+      double totalScore = 0.0;
+      int quesCount = 0;
+      int maxQues = 0;
+
+      for (var doc in quizDocs) {
+        int score = doc['score'];
+        if (score > highScore) {
+          highScore = score;
+          int highQuesCount = doc['questions'];
+          maxQues = highQuesCount;
+        }
+        totalScore += score;
+        int qCount = doc['questions'];
+        quesCount += qCount;
+      }
+
 
       setState(() {
         _totalWords = totalWords;
@@ -49,6 +76,10 @@ class _StatisticsState extends State<Statistics> {
         _viewedWords = viewedWords;
         _currentStreak = streaks['current_streak'];
         _longestStreak = streaks['longest_streak'];
+        _quizAttempted = quizDocs.length;
+        _highScore = highScore;
+        _averageScore = totalScore / quesCount;
+        _maxQues = maxQues;
         _weeklyWordCount = weeklyWordCount;
         _isLoading = false;
       });
@@ -157,13 +188,16 @@ class _StatisticsState extends State<Statistics> {
               color: Colors.grey,
               child: InkWell(
                 onTap: () {
-                  // Handle tap event
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => QuizHistory()),
+                  );
                 },
-                child: _buildStatisticCard('Quizzes Attempted', '25', Colors.grey.shade200),
+                child: _buildStatisticCard('Quizzes Attempted', '${_quizAttempted}', Colors.grey.shade200),
               ),
             ),
-            _buildStatisticCard('Average Score', '85%'),
-            _buildStatisticCard('High Score', '100%'),
+            _buildStatisticCard('Average Score', '${_averageScore.toStringAsFixed(2)}%'),
+            _buildStatisticCard('High Score', '${_highScore}/${_maxQues}'),
             // _buildStatisticCard('Accuracy', '90%'),
           ],
         ),

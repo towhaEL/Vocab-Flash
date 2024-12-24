@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
+import 'package:vocabflashcard_app/screens/practice_screen.dart';
 import '../widgets/bottom_navbar.dart';
 import '../widgets/category_tile.dart';
 import 'profile_screen.dart';
@@ -12,7 +12,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  final AuthService _authService = AuthService();
   User? _user;
   bool _isLoading = true;
 
@@ -35,10 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _signOut() async {
-    await _authService.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,15 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Vocabulary App'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _signOut,
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   title: Text('Vocabulary App'),
+      //   actions: [
+      //     IconButton(
+      //       icon: Icon(Icons.logout),
+      //       onPressed: _signOut,
+      //     ),
+      //   ],
+      // ),
       body: _buildBody(),
       bottomNavigationBar: BottomNavbar(
         selectedIndex: _selectedIndex,
@@ -78,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildCategoriesSection();
       case 1:
-        return _buildPracticeSection();
+        return PracticeScreen();
       case 2:
         return ProfileScreen();
       default:
@@ -87,47 +82,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoriesSection() {
-    return GridView.builder(
-      padding: EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: 26,
-      itemBuilder: (context, index) {
-        final letter = String.fromCharCode(65 + index); // A-Z
-        return CategoryTile(
-          letter: letter,
-          onTap: () {
-            Navigator.pushNamed(
-              context, 
-              '/flashcard',
-              arguments: letter,
-            );
-          },
-        );
-      },
-    );
-  }
+    return 
+    Scaffold(
+      appBar: AppBar(
+        title: Text('Select a category to start learning'),
+        backgroundColor: Colors.blue,
+        elevation: 5.0,
+        foregroundColor: Colors.white,
 
-  Widget _buildPracticeSection() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 50,
-            child: Icon(Icons.quiz, size: 50),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Practice',
-            style: Theme.of(context).textTheme.headlineSmall,
+          // Padding(
+          //   padding: const EdgeInsets.all(16.0),
+          //   child: Text('Select a category to start learning:', style: Theme.of(context).textTheme.titleLarge),
+          // ),
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: 26,
+              itemBuilder: (context, index) {
+                final letter = String.fromCharCode(65 + index); // A-Z
+                return CategoryTile(
+                  letter: letter,
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context, 
+                      '/flashcard',
+                      arguments: letter,
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+
 }

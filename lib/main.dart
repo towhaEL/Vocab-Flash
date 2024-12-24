@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:vocabflashcard_app/screens/practice_screen.dart';
 import 'package:vocabflashcard_app/screens/profile_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
@@ -55,6 +56,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/flashcard': (context) => FlashcardScreen(), // Add this line
         '/profile': (context) => ProfileScreen(),
+        '/practice': (context) => PracticeScreen(),
       },
     );
   }
