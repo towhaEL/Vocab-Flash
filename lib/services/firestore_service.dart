@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../models/vocabulary_model.dart';
 
 class FirestoreService {
@@ -340,6 +341,203 @@ class FirestoreService {
     if (user != null) {
       QuerySnapshot snapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
       return snapshot.docs;
+    } else {
+      throw Exception('No user is currently signed in.');
+    }
+  }
+
+
+
+  // Achivement & badges
+  Future<void> updateLoginStreak() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentReference userDocRef = _db.collection('users').doc(user.uid).collection('user_data').doc('last_login');
+      DocumentSnapshot userDoc = await userDocRef.get();
+
+      if (userDoc.exists) {
+        DateTime lastLogin = (userDoc['lastLogin'] as Timestamp).toDate();
+        DateTime now = DateTime.now();
+        int loginStreak = userDoc['loginStreak'];
+
+        if (now.difference(lastLogin).inDays == 1) {
+          // Increment streak if the last login was yesterday
+          loginStreak++;
+        } else if (now.difference(lastLogin).inDays > 1) {
+          // Reset streak if the last login was more than one day ago
+          loginStreak = 1;
+        }
+
+        await userDocRef.update({
+          'lastLogin': now,
+          'loginStreak': loginStreak,
+        });
+      } else {
+        // Initialize login streak if the user document does not exist
+        await userDocRef.set({
+          'lastLogin': DateTime.now(),
+          'loginStreak': 1,
+        });
+      }
+    } else {
+      throw Exception('No user is currently signed in.');
+    }
+  }
+
+  // Future<List<Map<String, dynamic>>> getAchievements() async {
+  //   User? user = _auth.currentUser;
+  //   if (user != null) {
+  //     QuerySnapshot quizSnapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
+  //     QuerySnapshot learnedWordsSnapshot = await _db.collection('users').doc(user.uid).collection('memorized').get();
+  //     DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).collection('user_data').doc('last_login').get();
+  //     int learnedWords = learnedWordsSnapshot.size;
+  //     int quizzesTaken = quizSnapshot.size;
+  //     int loginStreak = userDoc['loginStreak'];
+
+  //     List<Map<String, dynamic>> achievements = [];
+
+  //     // Learning achievements
+  //     if (learnedWords >= 10) {
+  //       achievements.add({
+  //         'title': 'Learner',
+  //         'description': 'Learned 10 words',
+  //         'icon': Icons.book,
+  //         'color': Colors.blue,
+  //       });
+  //     }
+  //     if (learnedWords >= 50) {
+  //       achievements.add({
+  //         'title': 'Scholar',
+  //         'description': 'Learned 50 words',
+  //         'icon': Icons.school,
+  //         'color': Colors.green,
+  //       });
+  //     }
+
+  //     // Quiz achievements
+  //     if (quizzesTaken >= 5) {
+  //       achievements.add({
+  //         'title': 'Quiz Master',
+  //         'description': 'Completed 5 quizzes',
+  //         'icon': Icons.quiz,
+  //         'color': Colors.orange,
+  //       });
+  //     }
+  //     if (quizzesTaken >= 20) {
+  //       achievements.add({
+  //         'title': 'Quiz Champion',
+  //         'description': 'Completed 20 quizzes',
+  //         'icon': Icons.emoji_events,
+  //         'color': Colors.red,
+  //       });
+  //     }
+
+  //     // Login achievements
+  //     if (loginStreak >= 7) {
+  //       achievements.add({
+  //         'title': 'Regular User',
+  //         'description': 'Logged in for 7 consecutive days',
+  //         'icon': Icons.login,
+  //         'color': Colors.purple,
+  //       });
+  //     }
+  //     if (loginStreak >= 30) {
+  //       achievements.add({
+  //         'title': 'Dedicated User',
+  //         'description': 'Logged in for 30 consecutive days',
+  //         'icon': Icons.star,
+  //         'color': Colors.yellow,
+  //       });
+  //     }
+
+  //     return achievements;
+  //   } else {
+  //     throw Exception('No user is currently signed in.');
+  //   }
+  // }
+
+  Future<List<Map<String, dynamic>>> getAchievements() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      QuerySnapshot quizSnapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
+      QuerySnapshot learnedWordsSnapshot = await _db.collection('users').doc(user.uid).collection('memorized').get();
+      DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).collection('user_data').doc('last_login').get();
+      int learnedWords = learnedWordsSnapshot.size;
+      int quizzesTaken = quizSnapshot.size;
+      int loginStreak = userDoc['loginStreak'];
+
+      List<Map<String, dynamic>> achievements = [];
+
+      // Learning achievements
+      achievements.add({
+        'title': 'Learner',
+        'description': 'Learned 10 words',
+        'icon': Icons.book,
+        'color': Colors.blue,
+        'acquired': learnedWords >= 10,
+      });
+      achievements.add({
+        'title': 'Scholar',
+        'description': 'Learned 50 words',
+        'icon': Icons.school,
+        'color': Colors.green,
+        'acquired': learnedWords >= 50,
+      });
+      achievements.add({
+        'title': 'Word Master',
+        'description': 'Learned 100 words',
+        'icon': Icons.library_books,
+        'color': Colors.teal,
+        'acquired': learnedWords >= 100,
+      });
+
+      // Quiz achievements
+      achievements.add({
+        'title': 'Quiz Master',
+        'description': 'Completed 5 quizzes',
+        'icon': Icons.quiz,
+        'color': Colors.orange,
+        'acquired': quizzesTaken >= 5,
+      });
+      achievements.add({
+        'title': 'Quiz Champion',
+        'description': 'Completed 20 quizzes',
+        'icon': Icons.emoji_events,
+        'color': Colors.red,
+        'acquired': quizzesTaken >= 20,
+      });
+      achievements.add({
+        'title': 'Quiz Legend',
+        'description': 'Completed 50 quizzes',
+        'icon': Icons.star,
+        'color': Colors.purple,
+        'acquired': quizzesTaken >= 50,
+      });
+
+      // Login achievements
+      achievements.add({
+        'title': 'Regular User',
+        'description': 'Logged in for 7 consecutive days',
+        'icon': Icons.login,
+        'color': Colors.purple,
+        'acquired': loginStreak >= 7,
+      });
+      achievements.add({
+        'title': 'Dedicated User',
+        'description': 'Logged in for 30 consecutive days',
+        'icon': Icons.star,
+        'color': Colors.yellow,
+        'acquired': loginStreak >= 30,
+      });
+      achievements.add({
+        'title': 'Committed User',
+        'description': 'Logged in for 100 consecutive days',
+        'icon': Icons.verified,
+        'color': Colors.blueAccent,
+        'acquired': loginStreak >= 100,
+      });
+
+      return achievements;
     } else {
       throw Exception('No user is currently signed in.');
     }

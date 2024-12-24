@@ -127,7 +127,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           label: 'Undo',
           onPressed: _undoMemorize,
         ),
-        duration: Duration(seconds: 2),
+        duration: Duration(microseconds: 500000),
       ),
     ).closed.then((reason) {
       if (reason != SnackBarClosedReason.action) {
@@ -186,6 +186,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     );
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     final String letter = ModalRoute.of(context)!.settings.arguments as String;
@@ -201,8 +203,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             ),
           ],
         ),
-        body: Center(
-          child: CircularProgressIndicator(),
+        body: GestureDetector(
+          onTap: () {
+            ScaffoldMessenger.of(context).clearSnackBars();
+          },
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
     }

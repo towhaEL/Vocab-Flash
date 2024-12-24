@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:vocabflashcard_app/screens/achivement_screen.dart';
 import 'statistics.dart'; // Import the new Statistics widget
 
 class ProfileScreen extends StatefulWidget {
@@ -121,24 +122,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             controller: _tabController,
             children: [
               Statistics(), // Use the new Statistics widget
-              _buildAchievementsTab(),
+              AchievementScreen(),
               _buildPreferencesTab(),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAchievementsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Achievements and Badges', style: TextStyle(fontSize: 18)),
-          // Add more details about achievements and badges here
-        ],
-      ),
     );
   }
 
