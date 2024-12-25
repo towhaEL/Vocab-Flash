@@ -67,10 +67,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
-        backgroundColor: Colors.blue,
+        title: Text('User Profile', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.deepPurpleAccent,
         elevation: 5.0,
-        foregroundColor: Colors.white,
+        // foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: Icon(Icons.settings),

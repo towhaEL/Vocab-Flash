@@ -87,8 +87,9 @@ class _FlashcardState extends State<Flashcard> {
           widthFactor: 0.9,
           heightFactor: 0.7,
           child: Card(
-            color: Colors.white,
-            elevation: 4,
+            shadowColor: Colors.deepPurple,
+            // color: Colors.white,
+            elevation: 15,
             margin: EdgeInsets.all(16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -116,7 +117,7 @@ class _FlashcardState extends State<Flashcard> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  // color: Colors.black87,
                 ),
               ),
               IconButton(
@@ -131,7 +132,7 @@ class _FlashcardState extends State<Flashcard> {
             style: TextStyle(
               fontSize: 18,
               fontStyle: FontStyle.italic,
-              color: Colors.grey[700],
+              // color: Colors.grey[700],
             ),
           ),
         ],
@@ -152,7 +153,7 @@ class _FlashcardState extends State<Flashcard> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  // color: Colors.black87,
                 ),
               ),
               IconButton(
@@ -166,7 +167,7 @@ class _FlashcardState extends State<Flashcard> {
             style: TextStyle(
               fontSize: 18,
               fontStyle: FontStyle.italic,
-              color: Colors.grey[700],
+              // color: Colors.grey[700],
             ),
           ),
           SizedBox(height: 8),
@@ -177,14 +178,14 @@ class _FlashcardState extends State<Flashcard> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           Text(
             widget.vocabulary.definition,
             style: TextStyle(
               fontSize: 18,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           SizedBox(height: 8),
@@ -193,14 +194,14 @@ class _FlashcardState extends State<Flashcard> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           Text(
             widget.vocabulary.synonyms.join(', '),
             style: TextStyle(
               fontSize: 18,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           SizedBox(height: 8),
@@ -209,14 +210,14 @@ class _FlashcardState extends State<Flashcard> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           Text(
             widget.vocabulary.example,
             style: TextStyle(
               fontSize: 18,
-              color: Colors.black87,
+              // color: Colors.black87,
             ),
           ),
           SizedBox(height: 16),

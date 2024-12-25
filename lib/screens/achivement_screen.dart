@@ -64,7 +64,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: acquired ? Colors.black : Colors.grey,
+                    color: acquired ? Theme.of(context).textTheme.titleLarge?.color : Colors.grey,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -72,7 +72,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
                   description,
                   style: TextStyle(
                     fontSize: 16,
-                    color: acquired ? Colors.black : Colors.grey,
+                    color: acquired ? Theme.of(context).textTheme.bodyMedium?.color : Colors.grey,
                   ),
                 ),
               ],

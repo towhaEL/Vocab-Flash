@@ -74,8 +74,22 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Vocab Flashcard App',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        brightness: Brightness.light,
+        buttonTheme: ButtonThemeData(
+          buttonColor: Colors.orange, // Set the default button color
+          textTheme: ButtonTextTheme.primary,
+        ),
+      ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.orange,
+        brightness: Brightness.dark,
+        buttonTheme: ButtonThemeData(
+          buttonColor: Colors.orange, // Set the default button color
+          textTheme: ButtonTextTheme.primary,
+        ),
+      ),
       themeMode: _themeMode,
       initialRoute: '/login',
       routes: {

@@ -76,10 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return 
     Scaffold(
       appBar: AppBar(
-        title: Text('Select a category to start learning'),
-        backgroundColor: Colors.blue,
+        title: Text('Select a category to start learning', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.deepPurpleAccent,
         elevation: 5.0,
-        foregroundColor: Colors.white,
+        // foregroundColor: Colors.white,
 
       ),
       body: Column(

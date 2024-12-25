@@ -64,10 +64,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Practice Quiz'),
-        backgroundColor: Colors.blue,
+        title: Text('Practice Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.deepPurpleAccent,
         elevation: 5.0,
-        foregroundColor: Colors.white,
+        // foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -163,6 +163,7 @@ class _StatisticsState extends State<Statistics> {
     return Container(
       width: 120,
       child: Card(
+        elevation: 5,
         color: clr,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
