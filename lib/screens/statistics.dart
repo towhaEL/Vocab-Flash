@@ -97,23 +97,26 @@ class _StatisticsState extends State<Statistics> {
     return ListView(
       children: [
         SizedBox(height: 16),
-        Container(
-          color: Colors.grey.shade100,
-          padding: EdgeInsets.all(5),
-          margin: EdgeInsets.all(5),
-          child: _buildVocabularyStatistics(context)),
+        Card(
+          margin: EdgeInsets.all(6),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: _buildVocabularyStatistics(context),
+          )),
         SizedBox(height: 16),
-        Container(
-          color: Colors.grey.shade100,
-          padding: EdgeInsets.all(5),
-          margin: EdgeInsets.all(5),
-          child: _buildDailyStreak(context)),
+        Card(
+          margin: EdgeInsets.all(6),
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: _buildDailyStreak(context),
+          )),
         SizedBox(height: 16),
-        Container(
-          color: Colors.grey.shade100,
-          padding: EdgeInsets.all(5),
-          margin: EdgeInsets.all(5),
-          child: _buildQuizPerformance(context)),
+        Card(
+          margin: EdgeInsets.all(6),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: _buildQuizPerformance(context),
+          )),
       ],
     );
   }
@@ -128,7 +131,7 @@ class _StatisticsState extends State<Statistics> {
           children: [
             Column(
               children: [
-                _buildStatisticCard('Total', '$_totalWords words', Colors.white),
+                _buildStatisticCard('Total', '$_totalWords words', Colors.grey),
                 _buildStatisticCard('Memorized', '$_memorizedWords words', Colors.green),
                 _buildStatisticCard('Viewed', '$_viewedWords words', Colors.blue),
               ],
@@ -156,7 +159,7 @@ class _StatisticsState extends State<Statistics> {
     );
   }
 
-  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.white]) {
+  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.grey]) {
     return Container(
       width: 120,
       child: Card(
@@ -212,7 +215,7 @@ class _StatisticsState extends State<Statistics> {
                     MaterialPageRoute(builder: (context) => QuizHistory()),
                   );
                 },
-                child: _buildStatisticCard('Quizzes Attempted', '${_quizAttempted}', Colors.grey.shade200),
+                child: _buildStatisticCard('Quizzes Attempted', '${_quizAttempted}', Colors.grey),
               ),
             ),
             _buildStatisticCard('Average Score', '${_averageScore.toStringAsFixed(2)}%'),
@@ -247,7 +250,7 @@ class _StatisticsState extends State<Statistics> {
 
   Widget _buildWeeklyCalendar() {
     return Table(
-      border: TableBorder.all(color: Colors.black),
+      border: TableBorder.all(color: Colors.black, width: 1.5),
       children: [
         TableRow(
           children: _weeklyWordCount.keys.map((day) {
@@ -270,13 +273,13 @@ class _StatisticsState extends State<Statistics> {
 
   Color _getColorForWordsLearned(int wordsLearned) {
     if (wordsLearned >= 6) {
-      return Colors.green[700]!;
+      return Colors.green[900]!;
     } else if (wordsLearned >= 4) {
-      return Colors.green[500]!;
+      return Colors.green[700]!;
     } else if (wordsLearned >= 2) {
-      return Colors.green[300]!;
+      return Colors.green[500]!;
     } else {
-      return Colors.lightGreen[100]!;
+      return Colors.lightGreen[400]!;
     }
   }
 }

@@ -49,15 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text('Vocabulary App'),
-      //   actions: [
-      //     IconButton(
-      //       icon: Icon(Icons.logout),
-      //       onPressed: _signOut,
-      //     ),
-      //   ],
-      // ),
       body: _buildBody(),
       bottomNavigationBar: BottomNavbar(
         selectedIndex: _selectedIndex,
@@ -94,10 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Padding(
-          //   padding: const EdgeInsets.all(16.0),
-          //   child: Text('Select a category to start learning:', style: Theme.of(context).textTheme.titleLarge),
-          // ),
           Expanded(
             child: GridView.builder(
               padding: EdgeInsets.all(16),

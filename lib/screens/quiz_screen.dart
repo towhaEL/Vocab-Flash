@@ -184,7 +184,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      // color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(

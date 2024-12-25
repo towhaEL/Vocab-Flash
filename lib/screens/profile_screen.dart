@@ -18,7 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _fetchUserData();
   }
 
@@ -52,8 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: Text('User Profile'),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _signOut,
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/more');
+            }
           ),
         ],
       ),
@@ -71,8 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _signOut,
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/more');
+            }
           ),
         ],
       ),
@@ -113,7 +117,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           tabs: [
             Tab(text: 'Statistics'),
             Tab(text: 'Achievements'),
-            Tab(text: 'Preferences'),
           ],
         ),
         Container(
@@ -123,7 +126,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             children: [
               Statistics(), // Use the new Statistics widget
               AchievementScreen(),
-              _buildPreferencesTab(),
             ],
           ),
         ),
@@ -131,16 +133,5 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildPreferencesTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Preferences', style: TextStyle(fontSize: 18)),
-          // Add more details about preferences here
-        ],
-      ),
-    );
-  }
 
 }
