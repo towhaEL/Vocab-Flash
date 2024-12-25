@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vocabflashcard_app/screens/achivement_screen.dart';
+import 'package:vocabflashcard_app/screens/leaderboard_screen.dart';
 import 'statistics.dart'; // Import the new Statistics widget
 
 class ProfileScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _fetchUserData();
   }
 
@@ -84,10 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         padding: const EdgeInsets.all(16.0),
         children: [
           _buildTopSection(),
-          // SizedBox(height: 16),
+          SizedBox(height: 16),
           _buildMiddleSection(),
-          // SizedBox(height: 16),
-          // _buildBottomSection(),
         ],
       ),
     );
@@ -96,9 +95,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildTopSection() {
     return Column(
       children: [
-        CircleAvatar(
-          radius: 30,
-          child: Icon(Icons.person, size: 50),
+        ElevatedButton(
+          onPressed: _signOut,
+          child: CircleAvatar(
+            radius: 20,
+            child: Icon(Icons.person, size: 35),
+          ),
         ),
         SizedBox(height: 16),
         Text(
@@ -117,6 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           tabs: [
             Tab(text: 'Statistics'),
             Tab(text: 'Achievements'),
+            Tab(text: 'Leaderboard'),
           ],
         ),
         Container(
@@ -126,6 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             children: [
               Statistics(), // Use the new Statistics widget
               AchievementScreen(),
+              LeaderboardScreen(),
             ],
           ),
         ),

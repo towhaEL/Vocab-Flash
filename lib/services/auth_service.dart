@@ -34,6 +34,7 @@ class AuthService {
       if (user != null) {
         // Update login streak after successful sign-in
         await _firestoreService.updateLoginStreak();
+        await _firestoreService.addUserData();
       }
 
       return userCredential;

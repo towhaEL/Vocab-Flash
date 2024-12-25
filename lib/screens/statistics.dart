@@ -86,6 +86,12 @@ class _StatisticsState extends State<Statistics> {
     }
   }
 
+  Color mixColorsFromInts(Color color1, Color color2, int value1, int value2) {
+  final total = (value1 + value2).toDouble();
+  final factor = value1 / total; // Calculate the interpolation factor
+  return Color.lerp(color1, color2, factor)!; // Interpolate between the two colors
+}
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -122,6 +128,7 @@ class _StatisticsState extends State<Statistics> {
   }
 
   Widget _buildVocabularyStatistics(BuildContext context) {
+    final mixedColor = mixColorsFromInts(Colors.blue, Colors.green, _memorizedWords, _viewedWords-_memorizedWords);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,9 +138,9 @@ class _StatisticsState extends State<Statistics> {
           children: [
             Column(
               children: [
-                _buildStatisticCard('Total', '$_totalWords words', Colors.grey),
-                _buildStatisticCard('Memorized', '$_memorizedWords words', Colors.green),
-                _buildStatisticCard('Viewed', '$_viewedWords words', Colors.blue),
+                _buildStatisticCard('Total', '$_totalWords words', Colors.grey.shade100),
+                _buildStatisticCard('Memorized', '$_memorizedWords words', Colors.blue),
+                _buildStatisticCard('Viewed', '${_viewedWords} words', mixedColor),
               ],
             ),
             Expanded(child: Column(
@@ -141,16 +148,58 @@ class _StatisticsState extends State<Statistics> {
                 _buildPieChart(),
                 SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Spacer(),
                     Container(
-                      height: 12,
-                      width: 12,
-                      color: Colors.red,
+                      decoration: BoxDecoration(border: Border.all()),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                        children: [
+                          Container(
+                            height: 12,
+                            width: 12,
+                            color: Colors.red,
+                          ),
+                          Text('  Remaining ${_totalWords - _viewedWords} words'),
+                        ],
+                                        ),
+                                        Row(
+                        children: [
+                          Container(
+                            height: 12,
+                            width: 12,
+                            color: Colors.blue,
+                          ),
+                          Text('  Memorized ${_memorizedWords} words'),
+                        ],
+                                        ),
+                                        Row(
+                                          
+                        children: [
+                          Container(
+                            height: 12,
+                            width: 12,
+                            color: Colors.green,
+                          ),
+                          Container(
+                            height: 12,
+                            width: 12,
+                            color: Colors.blue,
+                          ),
+                          Text('  Viewed ${_viewedWords} words'),
+                        ],
+                                        ),
+                          ],
+                        ),
+                      ),
                     ),
-                    Text('  Remaining words ${_totalWords - _memorizedWords - _viewedWords}'),
                   ],
-                ),
+                )
               ],
             )),
           ],
@@ -159,7 +208,7 @@ class _StatisticsState extends State<Statistics> {
     );
   }
 
-  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.grey]) {
+  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.lime]) {
     return Container(
       width: 120,
       child: Card(
@@ -170,9 +219,9 @@ class _StatisticsState extends State<Statistics> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
               SizedBox(height: 8),
-              Text(value, style: TextStyle(fontSize: 16)),
+              Text(value, style: TextStyle(fontSize: 16, color: Colors.black)),
             ],
           ),
         ),
@@ -186,9 +235,9 @@ class _StatisticsState extends State<Statistics> {
       child: PieChart(
         PieChartData(
           sections: [
-            PieChartSectionData(value: _memorizedWords.toDouble(), color: Colors.green, title: 'M'),
-            PieChartSectionData(value: _viewedWords.toDouble(), color: Colors.blue, title: 'V'),
-            PieChartSectionData(value: (_totalWords - _memorizedWords - _viewedWords).toDouble(), color: Colors.red, title: 'R'),
+            PieChartSectionData(value: _memorizedWords.toDouble(), color: Colors.blue, titleStyle: TextStyle(color: Colors.black),showTitle: true),
+            PieChartSectionData(value: (_viewedWords - _memorizedWords).toDouble(), color: Colors.green, titleStyle: TextStyle(color: Colors.black),showTitle: true),
+            PieChartSectionData(value: (_totalWords - _viewedWords).toDouble(), color: Colors.red, titleStyle: TextStyle(color: Colors.black),showTitle: true),
           ],
         ),
       ),

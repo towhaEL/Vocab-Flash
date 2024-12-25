@@ -177,51 +177,53 @@ class _QuizScreenState extends State<QuizScreen> {
             ..._questions.asMap().entries.map((entry) {
               int questionIndex = entry.key;
               Question question = entry.value;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      // color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
+              return Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      // margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        // color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Question ${questionIndex + 1} of ${widget.numberOfQuestions}', style: Theme.of(context).textTheme.headlineSmall),
+                          SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(question.word, style: Theme.of(context).textTheme.headlineMedium),
+                              IconButton(
+                                icon: Icon(Icons.volume_up),
+                                onPressed: () => _speak(question.word),
+                              ), 
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          ...question.options.asMap().entries.map((optionEntry) {
+                            int optionIndex = optionEntry.key;
+                            String option = optionEntry.value;
+                            return ListTile(
+                              title: Text(option),
+                              leading: Radio<int>(
+                                value: optionIndex,
+                                groupValue: _selectedAnswers[questionIndex],
+                                onChanged: (int? value) {
+                                  setState(() {
+                                    _selectedAnswers[questionIndex] = value;
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Question ${questionIndex + 1} of ${widget.numberOfQuestions}', style: Theme.of(context).textTheme.headlineSmall),
-                        SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text(question.word, style: Theme.of(context).textTheme.headlineMedium),
-                            IconButton(
-                              icon: Icon(Icons.volume_up),
-                              onPressed: () => _speak(question.word),
-                            ), 
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        ...question.options.asMap().entries.map((optionEntry) {
-                          int optionIndex = optionEntry.key;
-                          String option = optionEntry.value;
-                          return ListTile(
-                            title: Text(option),
-                            leading: Radio<int>(
-                              value: optionIndex,
-                              groupValue: _selectedAnswers[questionIndex],
-                              onChanged: (int? value) {
-                                setState(() {
-                                  _selectedAnswers[questionIndex] = value;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }).toList(),
             Center(

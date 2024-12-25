@@ -47,6 +47,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         );
       }).where((vocab) => !memorizedWords.contains(vocab.name)).toList();
       _isLoading = false;
+
+      _viewWord();
     });
   }
 
@@ -62,16 +64,20 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   void _nextCard() {
     setState(() {
       _isFlipped = false;
+      // _viewWord();
       _currentIndex = (_currentIndex + 1) % _vocabularyList.length;
+      _viewWord();
     });
   }
 
   void _removeCard() {
     setState(() {
       _isFlipped = false;
+      // _viewWord();
       _lastRemovedVocab = _vocabularyList.removeAt(_currentIndex);
       if (_vocabularyList.isNotEmpty) {
         _currentIndex = _currentIndex % _vocabularyList.length;
+        _viewWord();
       } else {
         Navigator.pop(context);
       }
@@ -95,8 +101,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       _memorizeWord();
     } else if (_dragUpdateX < -100) {
       // Swiped left
-      // _nextCard();
-      _viewWord();
+      _nextCard();
+      // _viewWord();
     }
     setState(() {
       _dragUpdateX = 0.0;
@@ -106,7 +112,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   void _viewWord() {
     _firestoreService.addVocabularyToViewed(_vocabularyList[_currentIndex]);
-    _nextCard();
+    // _nextCard();
   }
 
   void _memorizeWord() {

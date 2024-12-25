@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vocabflashcard_app/services/firestore_service.dart';
 
 class MoreTabScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -12,6 +13,7 @@ class MoreTabScreen extends StatefulWidget {
 }
 
 class _MoreTabScreenState extends State<MoreTabScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
   bool _isDarkTheme = false;
   int _tapCount = 0;
   Timer? _tapTimer;
@@ -97,6 +99,7 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
 
     if (_tapCount == 5) {
       _tapCount = 0;
+      await _firestoreService.setAdmin();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Trust me bro!'), duration: Duration(seconds: 1)));
     }
   }
