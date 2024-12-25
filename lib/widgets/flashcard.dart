@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../models/vocabulary_model.dart';
@@ -7,13 +9,14 @@ class Flashcard extends StatefulWidget {
   final Vocabulary vocabulary;
   final VoidCallback onFlip;
   final bool isFlipped;
+  final bool isHidden;
   final Key? key;
 
   Flashcard({
     required this.vocabulary,
     required this.onFlip,
     required this.isFlipped,
-    this.key,
+    this.key, required this.isHidden,
   });
 
   @override
@@ -106,37 +109,74 @@ class _FlashcardState extends State<Flashcard> {
 
   Widget _buildDefaultCard() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+      child: widget.isHidden? 
+      ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 0),
+        child: Container(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _formatName(widget.vocabulary.name),
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  // color: Colors.black87,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.vocabulary.name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      // color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.volume_up),
+                    onPressed: _speak,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: Icon(Icons.volume_up),
-                onPressed: _speak,
+              SizedBox(height: 8),
+              Text(
+                widget.vocabulary.pronunciation,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontStyle: FontStyle.italic,
+                  // color: Colors.grey[700],
+                ),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          Text(
-            widget.vocabulary.pronunciation,
-            style: TextStyle(
-              fontSize: 18,
-              fontStyle: FontStyle.italic,
-              // color: Colors.grey[700],
-            ),
+        ),
+      ) :
+      Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.vocabulary.name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      // color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.volume_up),
+                    onPressed: _speak,
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                widget.vocabulary.pronunciation,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontStyle: FontStyle.italic,
+                  // color: Colors.grey[700],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
