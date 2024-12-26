@@ -53,6 +53,7 @@ class AuthService {
         email: email,
         password: password,
       );
+
     } on FirebaseAuthException catch (e) {
       print('FirebaseAuthException during email sign-up: ${e.message}');
       return null;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocabflashcard_app/services/firestore_service.dart';
@@ -14,6 +15,8 @@ class MoreTabScreen extends StatefulWidget {
 
 class _MoreTabScreenState extends State<MoreTabScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
   bool _isDarkTheme = false;
   int _tapCount = 0;
   Timer? _tapTimer;
@@ -22,6 +25,11 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
   void initState() {
     super.initState();
     _loadThemePreference();
+  }
+
+  Future<void> _signOut() async {
+    await _auth.signOut();
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   Future<void> _loadThemePreference() async {
@@ -40,35 +48,139 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
     widget.onThemeChanged(value ? ThemeMode.dark : ThemeMode.light);
   }
 
+
   void _resetProgress() {
+    final TextEditingController _passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Reset Progress'),
-        content: Text('Are you sure you want to reset your progress? This action cannot be undone.'),
+        content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Are you sure you want to reset your progress?",
+                    // style: TextStyle(color: Colors.black),
+                  ),
+                  TextSpan(
+                    text: " This action cannot be undone.",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          SizedBox(height: 10.0),
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'Enter Password',
+            ),
+          ),
+        ],
+      ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Implement reset progress logic here
-            },
-            child: Text('Reset'),
-          ),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            final password = _passwordController.text.trim();
+            if (password.isNotEmpty) {
+              await _firestoreService.resetAccount(context, password);
+               // Call delete logic
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Password is required.')),
+              );
+            }
+          },
+          child: Text('Delete'),
+        ),
         ],
       ),
     );
   }
 
-  void _deleteAccount() {
+void _deleteAccount() {
+  final TextEditingController _passwordController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Delete Account'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Are you sure you want to delete your account?",
+                    // style: TextStyle(color: Colors.black),
+                  ),
+                  TextSpan(
+                    text: " This action cannot be undone.",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          SizedBox(height: 10.0),
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'Enter Password',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            final password = _passwordController.text.trim();
+            if (password.isNotEmpty) {
+              await _firestoreService.deleteUserAccount(context, password);
+              _user = _auth.currentUser;
+              print(_user);
+              if(_user == null) {
+                Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+               // Call delete logic
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Password is required.')),
+              );
+            }
+          },
+          child: Text('Delete'),
+        ),
+      ],
+    ),
+  );
+}
+
+  void _logoutAccount() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Account'),
-        content: Text('Are you sure you want to delete your account? This action cannot be undone.'),
+        title: Text('Logout'),
+        content: Text('Are you sure you want to log out of your account?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -76,10 +188,9 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              // Implement delete account logic here
+              _signOut();
             },
-            child: Text('Delete'),
+            child: Text('Logout'),
           ),
         ],
       ),
@@ -113,6 +224,20 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
       body: ListView(
         padding: EdgeInsets.all(16.0),
         children: [
+          Card(
+            margin: EdgeInsets.symmetric(vertical: 8.0),
+            child: ListTile(
+              title: Row(
+                children: [
+                  Text('Logout'),
+                  Spacer(),
+                  Icon(Icons.logout, color: Colors.grey),
+                ],
+              ),
+              onTap: _logoutAccount,
+            ),
+          ),
+          Divider(),
           // App Theme Section
           ListTile(
             leading: Icon(Icons.color_lens, color: Colors.deepOrange),
@@ -154,7 +279,6 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
             ),
           ),
           Divider(),
-
           // Account Settings
           ListTile(
             leading: Icon(Icons.settings, color: Colors.red),
@@ -195,6 +319,7 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
           // App Info
           Card(
             margin: EdgeInsets.symmetric(vertical: 8.0),
+            elevation: 0,
             child: GestureDetector(
               onTap: _handleTap,
               child: ListTile(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tuple/tuple.dart';
 import 'package:vocabflashcard_app/models/leaderboard_model.dart';
 import '../models/vocabulary_model.dart';
 
@@ -65,6 +66,7 @@ class FirestoreService {
         'pronunciation': vocab.pronunciation,
       });
       await _updateDailyWordCount(user.uid, 'memorized');
+      await updateDailyStreak();
     }
   }
 
@@ -180,43 +182,56 @@ class FirestoreService {
     final DateTime today = DateTime.now();
     final String todayStr = '${today.year}-${today.month}-${today.day}';
 
-    final DocumentReference dailyCountRef = _db
-        .collection('users')
-        .doc(userId)
-        .collection('daily_word_count')
-        .doc(todayStr);
-
+    final DocumentReference dailyCountRef = _db.collection('users').doc(userId).collection('daily_word_count').doc(todayStr);
+    final DocumentReference dailyGoalRef = _db.collection('users').doc(userId).collection('user_data').doc('daily_goal');
+    final DocumentSnapshot dailyGoalDoc = await dailyGoalRef.get();
     final DocumentSnapshot dailyCountDoc = await dailyCountRef.get();
+
+    // final Map<String, dynamic> data = dailyCountDoc.data() as Map<String, dynamic>;
+    int daily_goal = dailyGoalDoc['dailyGoal'];
 
     if (dailyCountDoc.exists) {
       final Map<String, dynamic> data = dailyCountDoc.data() as Map<String, dynamic>;
       int count = data[type] ?? 0;
       count += 1;
 
-      await dailyCountRef.update({type: count});
+      await dailyCountRef.update({
+        type: count,
+        'goalCompleted': (type=='memorized' && count>=daily_goal)? true : data['goalCompleted'],
+        });
     } else {
       await dailyCountRef.set({
         'date': today,
         'memorized': type == 'memorized' ? 1 : 0,
         'viewed': type == 'viewed' ? 1 : 0,
+        'goalCompleted': false
       });
     }
   }
 
-
   Future<void> updateDailyStreak() async {
+    final DateTime today = DateTime.now();
+    final DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+    final String todayStr = '${today.year}-${today.month}-${today.day}';
+    final String yesterdayStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
+
     final User? user = _auth.currentUser;
     if (user != null) {
       final DocumentReference streakRef = _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak');
       final DocumentSnapshot streakDoc = await streakRef.get();
+      final DocumentReference wordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(todayStr);
+      final DocumentSnapshot wordCountDoc = await wordCountRef.get();
+      final DocumentReference yesterdayWordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(yesterdayStr);
+      final DocumentSnapshot yesterdayWordCountDoc = await yesterdayWordCountRef.get();
 
       if (streakDoc.exists) {
         final Map<String, dynamic> data = streakDoc.data() as Map<String, dynamic>;
-        final DateTime lastUpdated = (data['last_updated'] as Timestamp).toDate();
+        // final DateTime lastUpdated = (data['last_updated'] as Timestamp).toDate();
         final DateTime today = DateTime.now();
 
-        if (today.difference(lastUpdated).inDays == 1) {
-          // Increment current streak
+        if (data['last_updated'] != todayStr && wordCountDoc['goalCompleted'] == true) {
+          if (yesterdayWordCountDoc['goalCompleted'] == true ) {
+            // Increment current streak
           int currentStreak = data['current_streak'] + 1;
           int longestStreak = data['longest_streak'];
 
@@ -227,9 +242,17 @@ class FirestoreService {
           await streakRef.update({
             'current_streak': currentStreak,
             'longest_streak': longestStreak,
+            'last_updated': todayStr,
+          });
+          } else {
+            // Reset current streak
+          await streakRef.update({
+            'current_streak': 1,
             'last_updated': today,
           });
-        } else if (today.difference(lastUpdated).inDays > 1) {
+
+          }
+        } else {
           // Reset current streak
           await streakRef.update({
             'current_streak': 1,
@@ -238,14 +261,72 @@ class FirestoreService {
         }
       } else {
         // Initialize streak document
-        await streakRef.set({
-          'current_streak': 1,
-          'longest_streak': 1,
-          'last_updated': DateTime.now(),
-        });
+            if (wordCountDoc['goalCompleted']) {
+              await streakRef.set({
+              'current_streak': 1,
+              'longest_streak': 1,
+              'last_updated': todayStr,
+            });
+        }    
       }
     }
   }
+
+
+  // Future<void> updateDailyStreak() async {
+  //   final DateTime today = DateTime.now();
+  //   final DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+  //   final String todayStr = '${today.year}-${today.month}-${today.day}';
+  //   final String yesterdayStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
+
+  //   final User? user = _auth.currentUser;
+  //   if (user != null) {
+  //     final DocumentReference streakRef = _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak');
+  //     final DocumentSnapshot streakDoc = await streakRef.get();
+  //     final DocumentReference wordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(todayStr);
+  //     final DocumentSnapshot wordCountDoc = await wordCountRef.get();
+  //     final DocumentReference yesterdayWordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(yesterdayStr);
+  //     final DocumentSnapshot yesterdayWordCountDoc = await yesterdayWordCountRef.get();
+
+  //     if (streakDoc.exists) {
+  //       final Map<String, dynamic> data = streakDoc.data() as Map<String, dynamic>;
+  //       final DateTime lastUpdated = (data['last_updated'] as Timestamp).toDate();
+  //       final DateTime today = DateTime.now();
+
+  //       if (today.difference(lastUpdated).inDays == 1 && wordCountDoc['goalCompleted'] == true) {
+  //         // Increment current streak
+  //         int currentStreak = data['current_streak'] + 1;
+  //         int longestStreak = data['longest_streak'];
+
+  //         if (currentStreak > longestStreak) {
+  //           longestStreak = currentStreak;
+  //         }
+
+  //         await streakRef.update({
+  //           'current_streak': currentStreak,
+  //           'longest_streak': longestStreak,
+  //           'last_updated': today,
+  //         });
+  //       } else if (today.difference(lastUpdated).inDays > 1) {
+  //         // Reset current streak
+  //         await streakRef.update({
+  //           'current_streak': 1,
+  //           'last_updated': today,
+  //         });
+  //       }
+  //     } else {
+  //       // Initialize streak document
+  //           if (wordCountDoc['goalCompleted']) {
+  //             await streakRef.set({
+  //             'current_streak': 1,
+  //             'longest_streak': 1,
+  //             'last_updated': DateTime.now(),
+  //           });
+  //       }    
+  //     }
+  //   }
+  // }
+
 
   Future<Map<String, dynamic>> getStreaks() async {
     final User? user = _auth.currentUser;
@@ -258,7 +339,7 @@ class FirestoreService {
     return {'current_streak': 0, 'longest_streak': 0};
   }
 
-  Future<Map<String, int>> getWeeklyWordCount() async {
+  Future<Map<String, Tuple2<int, bool>>> getWeeklyWordCount() async {
     final User? user = _auth.currentUser;
     if (user != null) {
       final DateTime now = DateTime.now();
@@ -273,14 +354,14 @@ class FirestoreService {
           .where('date', isLessThanOrEqualTo: endOfWeek)
           .get();
 
-      final Map<String, int> weeklyWordCount = {
-        'Mon': 0,
-        'Tue': 0,
-        'Wed': 0,
-        'Thu': 0,
-        'Fri': 0,
-        'Sat': 0,
-        'Sun': 0,
+      Map<String, Tuple2<int, bool>> _weeklyWordCount = {
+        'Mon': Tuple2(0, false),
+        'Tue': Tuple2(0, false),
+        'Wed': Tuple2(0, false),
+        'Thu': Tuple2(0, false),
+        'Fri': Tuple2(0, false),
+        'Sat': Tuple2(0, false),
+        'Sun': Tuple2(0, false),
       };
 
       for (final doc in snapshot.docs) {
@@ -288,10 +369,10 @@ class FirestoreService {
         final DateTime date = (data['date'] as Timestamp).toDate();
         final String day = _getDayOfWeek(date.weekday);
 
-        weeklyWordCount[day] = (data['memorized'] ?? 0);
+        _weeklyWordCount[day] = Tuple2((data['memorized'] ?? 0), data['goalCompleted'] ?? false);
       }
 
-      return weeklyWordCount;
+      return _weeklyWordCount;
     }
     return {};
   }
@@ -702,24 +783,23 @@ achievements.add({
       DocumentReference userDocRef = _db.collection('users').doc(user.uid).collection('user_data').doc('user_info');
       DocumentSnapshot userDoc = await userDocRef.get();
       DocumentReference adminDocRef = _db.collection('users').doc(user.uid).collection('user_data').doc('admin_status');
-      DocumentSnapshot adminDoc = await userDocRef.get();
+      DocumentSnapshot adminDoc = await adminDocRef.get();
+      DocumentReference dailyGoalDocRef = _db.collection('users').doc(user.uid).collection('user_data').doc('daily_goal');
+      DocumentSnapshot dailyGoalDoc = await dailyGoalDocRef.get();
 
       
       // Reference to Firestore collection
   CollectionReference usersCollection = _db.collection('users_data');
-
   // Check if a document with the same email or userId exists
   QuerySnapshot querySnapshot = await usersCollection
       .where('email', isEqualTo: _userEmail) // Check for existing email
       .get();
-
   if (querySnapshot.docs.isEmpty) {
     // If no document found with the same email, proceed to add user data
     Map<String, dynamic> userData = {
       'email': _userEmail,
       'userId': _userId,
     };
-
     await usersCollection.add(userData);
     print('User data added successfully');
   } else {
@@ -727,6 +807,17 @@ achievements.add({
     print('User with this email already exists');
   }
 
+      //daily_goal
+      if (dailyGoalDoc.exists) {
+
+      } else {
+        print('object2');
+        await dailyGoalDocRef.set({
+          'dailyGoal': 5,
+        });
+      }
+
+      //admin_status
       if (adminDoc.exists) {
         await adminDocRef.update({
           'isAdmin': false,
@@ -737,6 +828,7 @@ achievements.add({
         });
       }
 
+      //user_info
       if (userDoc.exists) {
         await userDocRef.update({
           'email': _userEmail,
@@ -751,9 +843,13 @@ achievements.add({
     } else {
       throw Exception('No user is currently signed in.');
     }
+    
+
   }
 
 
+
+// Leaderboard
 Future<List<Leaderboard>> getLeaderboardData() async {
   try {
     List<Leaderboard> leaderboard = [];
@@ -941,5 +1037,136 @@ Future<List<Leaderboard>> getLeaderboardData() async {
 // }
 
 
-  
+// Account settings
+Future<void> resetAccount(BuildContext context, password) async {
+    try {
+      final User? user = _auth.currentUser;
+    if (user != null) {
+
+      // Reauthenticate user
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+
+      final QuerySnapshot memorizedSnap = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('memorized')
+          .get();
+      for (var doc in memorizedSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      final QuerySnapshot daily_word_count = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('daily_word_count')
+          .get();
+      for (var doc in daily_word_count.docs) {
+        await doc.reference.delete();
+      }
+
+      final QuerySnapshot viewed_wordsSnap = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('viewed_words')
+          .get();
+      for (var doc in viewed_wordsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      final QuerySnapshot quiz_resultsSnap = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('quiz_results')
+          .get();
+      for (var doc in quiz_resultsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      final QuerySnapshot streaksSnap = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('streaks')
+          .get();
+      for (var doc in streaksSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // final QuerySnapshot user_data = await _db
+      //     .collection('users')
+      //     .doc(user.uid)
+      //     .collection('user_data')
+      //     .get();
+      // for (var doc in user_data.docs) {
+      //   await doc.reference.delete();
+      // }
+      Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Account Progress is completely removed!')),
+      );
+
+    } else {
+      
+    }
+
+    } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+    }
+  }
+
+  Future<void> deleteUserAccount(BuildContext  context, String password) async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    String currentUser = user!.uid;
+    String _userEmail = user.email!;
+
+    if (user != null) {
+      // Reauthenticate user
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Delete Firestore data
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+
+      // Delete Auth account
+      await user.delete();
+
+      // Optional: Delete other related collections if needed
+      CollectionReference usersCollection = FirebaseFirestore.instance.collection('users_data');
+      QuerySnapshot querySnapshot = await usersCollection
+      .where('email', isEqualTo: _userEmail) // Check for existing email
+      .get();
+
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      //
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Account deleted successfully.')),
+      );
+
+      Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
+      // Navigate to login or welcome screen
+      Navigator.of(context).pushReplacementNamed('/login');
+    } else {
+      throw Exception('User is not logged in.');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+  }
 }
+
+ }

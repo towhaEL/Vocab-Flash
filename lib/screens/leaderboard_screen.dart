@@ -12,6 +12,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   bool _isLoading = true;
   List<Leaderboard> _leaderboard = [];
   int _leaderboardCount = 0;
+  int _rank = 0;
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
       setState(() {
         _leaderboard = leaderboard;
+        getRank();
         _leaderboardCount = leaderboard.length;
         _isLoading = false;
       });
@@ -33,6 +35,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void getRank() {
+    int index = 1;
+    for (var leaderboard in _leaderboard) {
+      if(leaderboard.owner) {
+        _rank = index;
+        break;
+      }
+      index++;
     }
   }
 
@@ -73,14 +86,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                       ),if (index < 3) ...[
                         Center(
-                          child: Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Icon(
-                              index == 0 ? Icons.emoji_events : index == 1 ? Icons.emoji_events : Icons.emoji_events,
-                              size: 50,
-                              color: index == 0 ? Colors.amber : index == 1 ? Colors.grey : Colors.brown,
-                            ),
+                          child: Icon(
+                            index == 0 ? Icons.emoji_events : index == 1 ? Icons.emoji_events : Icons.emoji_events,
+                            size: 50,
+                            color: index == 0 ? Colors.amber : index == 1 ? Colors.grey : Colors.brown,
                           ),
                         ),
                       ],
@@ -140,7 +149,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Global Leaderboard ($_leaderboardCount Users)'),
+        title: Text('Global Leaderboard (Rank: ${_rank}/$_leaderboardCount)'),
+        automaticallyImplyLeading: false,
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())

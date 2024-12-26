@@ -118,6 +118,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Achievements unlocked ${_acuiredAchivement}/${_achivementsCount}'),
+        automaticallyImplyLeading: false,
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())

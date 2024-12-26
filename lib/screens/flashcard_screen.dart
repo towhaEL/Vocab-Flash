@@ -117,7 +117,6 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
 
   void _memorizeWord() {
     _firestoreService.addVocabularyToMemorized(_vocabularyList[_currentIndex]);
-    _firestoreService.updateDailyStreak();
     _removeCard();
     _showUndo();
   }

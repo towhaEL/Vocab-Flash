@@ -1,7 +1,9 @@
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tuple/tuple.dart';
 import 'package:vocabflashcard_app/screens/quiz_history.dart';
 import '../services/firestore_service.dart';
 
@@ -25,14 +27,14 @@ class _StatisticsState extends State<Statistics> {
 
   double _averageScore = 0.0;
 
-  Map<String, int> _weeklyWordCount = {
-    'Mon': 0,
-    'Tue': 0,
-    'Wed': 0,
-    'Thu': 0,
-    'Fri': 0,
-    'Sat': 0,
-    'Sun': 0,
+  Map<String, Tuple2<int, bool>> _weeklyWordCount = {
+    'Mon': Tuple2(0, false),
+    'Tue': Tuple2(0, false),
+    'Wed': Tuple2(0, false),
+    'Thu': Tuple2(0, false),
+    'Fri': Tuple2(0, false),
+    'Sat': Tuple2(0, false),
+    'Sun': Tuple2(0, false),
   };
   bool _isLoading = true;
 
@@ -49,7 +51,7 @@ class _StatisticsState extends State<Statistics> {
       int memorizedWords = await _firestoreService.getLearnedWords(user.uid);
       int viewedWords = await _firestoreService.getViewedWords(user.uid);
       Map<String, dynamic> streaks = await _firestoreService.getStreaks();
-      Map<String, int> weeklyWordCount = await _firestoreService.getWeeklyWordCount();
+      Map<String, Tuple2<int, bool>> weeklyWordCount = await _firestoreService.getWeeklyWordCount();
       List<QueryDocumentSnapshot> quizDocs = await _firestoreService.getQuizResults();
 
       int highScore = 0;
@@ -132,7 +134,12 @@ class _StatisticsState extends State<Statistics> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Vocabulary Statistics', style: Theme.of(context).textTheme.headlineSmall),
+        Row(
+          children: [
+            Text('Vocabulary Statistics ', style: Theme.of(context).textTheme.headlineSmall),
+            Icon(Icons.calendar_view_month_outlined)
+          ],
+        ),
         SizedBox(height: 16),
         Row(
           children: [
@@ -208,7 +215,7 @@ class _StatisticsState extends State<Statistics> {
     );
   }
 
-  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.lime]) {
+  Widget _buildStatisticCard(String title, String value, [Color clr = Colors.deepPurpleAccent]) {
     return Container(
       width: 120,
       child: Card(
@@ -248,7 +255,12 @@ class _StatisticsState extends State<Statistics> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quiz Performance', style: Theme.of(context).textTheme.headlineSmall),
+        Row(
+          children: [
+            Text('Quiz Performance ', style: Theme.of(context).textTheme.headlineSmall),
+            Icon(Icons.trending_up),
+          ],
+        ),
         SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 3,
@@ -257,7 +269,7 @@ class _StatisticsState extends State<Statistics> {
           children: [
             Card(
               elevation: 5,
-              color: Colors.grey,
+              color: Colors.deepPurple,
               child: InkWell(
                 onTap: () {
                   Navigator.push(
@@ -265,7 +277,7 @@ class _StatisticsState extends State<Statistics> {
                     MaterialPageRoute(builder: (context) => QuizHistory()),
                   );
                 },
-                child: _buildStatisticCard('Quizzes Attempted', '${_quizAttempted}', Colors.grey),
+                child: _buildStatisticCard('Quizzes Attempted', '${_quizAttempted}', Colors.deepPurpleAccent),
               ),
             ),
             _buildStatisticCard('Average Score', '${_averageScore.toStringAsFixed(2)}%'),
@@ -283,7 +295,14 @@ class _StatisticsState extends State<Statistics> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Daily Streak', style: Theme.of(context).textTheme.headlineSmall),
+        Row(
+          children: [
+            Text('Daily Goal ', style: Theme.of(context).textTheme.headlineSmall),
+            Icon(Icons.check_circle)
+          ],
+        ),
+        SizedBox(height: 16),
+        _buildWeeklyCalendar(),
         SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -292,26 +311,30 @@ class _StatisticsState extends State<Statistics> {
             Expanded(child: _buildStatisticCard('Longest Streak', '$_longestStreak days')),
           ],
         ),
-        SizedBox(height: 16),
-        _buildWeeklyCalendar(),
+        SizedBox(height: 16,),
       ],
     );
   }
 
   Widget _buildWeeklyCalendar() {
     return Table(
-      border: TableBorder.all(color: Colors.black, width: 1.5),
+      border: TableBorder.all(width: 1.5, borderRadius: BorderRadius.circular(5)),
       children: [
         TableRow(
           children: _weeklyWordCount.keys.map((day) {
             return Container(
               padding: const EdgeInsets.all(8.0),
-              color: _getColorForWordsLearned(_weeklyWordCount[day]!),
+              color: (day == DateFormat('E').format(DateTime.now()))? 
+                Colors.deepPurple[500]
+                : Colors.deepPurple[300],
+              // color: _getColorForWordsLearned(_weeklyWordCount[day]!.item1),
               child: Column(
                 children: [
-                  Text(day, style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Text('${_weeklyWordCount[day]} words'),
+                  (_weeklyWordCount[day]!.item2)? Icon(Icons.check, color: Colors.green,) : Icon(Icons.cancel_outlined, color: Colors.red,),
+                  SizedBox(height: 4,),
+                  Text(day, style: TextStyle(fontWeight: FontWeight.bold, )),
+                  Text('${_weeklyWordCount[day]?.item1}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, ),),
+                  Text('words',),
                 ],
               ),
             );
@@ -322,14 +345,14 @@ class _StatisticsState extends State<Statistics> {
   }
 
   Color _getColorForWordsLearned(int wordsLearned) {
-    if (wordsLearned >= 6) {
-      return Colors.green[900]!;
-    } else if (wordsLearned >= 4) {
-      return Colors.green[700]!;
-    } else if (wordsLearned >= 2) {
-      return Colors.green[500]!;
+    if (wordsLearned >= 15) {
+      return Colors.deepPurple[700]!;
+    } else if (wordsLearned >= 10) {
+      return Colors.deepPurple[500]!;
+    } else if (wordsLearned >= 5) {
+      return Colors.deepPurple[400]!;
     } else {
-      return Colors.lightGreen[400]!;
+      return Colors.deepPurple[300]!;
     }
   }
 }

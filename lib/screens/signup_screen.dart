@@ -116,7 +116,10 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
       if (result != null) {
-        Navigator.pushReplacementNamed(context, '/home');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign up completed. Log in to your account.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Sign up failed. Please try again.')),
