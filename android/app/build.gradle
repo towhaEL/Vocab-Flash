@@ -67,7 +67,11 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'com.google.firebase:firebase-auth:22.1.1' // Firebase Auth
+    implementation 'com.google.firebase:firebase-firestore:24.7.1' // Firestore
+}
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services' // Add this

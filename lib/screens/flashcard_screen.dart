@@ -96,10 +96,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
-    if (_dragUpdateX > 100) {
+    if (_dragUpdateX > 150) {
       // Swiped right
       _memorizeWord();
-    } else if (_dragUpdateX < -100) {
+    } else if (_dragUpdateX < -150) {
       // Swiped left
       _nextCard();
       // _viewWord();

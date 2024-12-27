@@ -66,7 +66,9 @@ class FirestoreService {
         'pronunciation': vocab.pronunciation,
       });
       await _updateDailyWordCount(user.uid, 'memorized');
+      await updateAchievements();
       await updateDailyStreak();
+
     }
   }
 
@@ -269,6 +271,9 @@ class FirestoreService {
             });
         }    
       }
+
+      updateAchievements();
+
     }
   }
 
@@ -415,6 +420,8 @@ class FirestoreService {
         'accuracy': accuracy,
         'timestamp': FieldValue.serverTimestamp(),
       });
+
+      await updateAchievements();
     } else {
       throw Exception('No user is currently signed in.');
     }
@@ -463,6 +470,81 @@ class FirestoreService {
           'loginStreak': 1,
         });
       }
+      updateAchievements();
+    } else {
+      throw Exception('No user is currently signed in.');
+    }
+  }
+
+  Future<void> updateAchievements() async {
+    User? user = _auth.currentUser;
+    if (user != null) {      
+      final DocumentSnapshot streakDoc = await _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak').get();
+      QuerySnapshot quizSnapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
+      List<QueryDocumentSnapshot> quizDocs = quizSnapshot.docs;
+      QuerySnapshot learnedWordsSnapshot = await _db.collection('users').doc(user.uid).collection('memorized').get();
+      DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).collection('user_data').doc('last_login').get();
+
+      int learnedWords = 0;
+      int quizzesTaken = 0;
+      learnedWords = learnedWordsSnapshot.size;
+      quizzesTaken = quizSnapshot.size;
+      int loginStreak = userDoc.exists ? userDoc['loginStreak'] : 0;
+      int learningStreak = streakDoc.exists ? streakDoc['longest_streak'] : 0;
+      int questionsAnsweredCorrectly = 0;
+      int totalQuestions = 0;
+      for (var doc in quizDocs) {
+        int score = doc['score'];
+        int quesCount = doc['questions'];
+        questionsAnsweredCorrectly += score;
+        totalQuestions +=  quesCount;
+      }
+        
+
+
+      DocumentReference userAchievementRef = _db.collection('users').doc(user.uid).collection('user_data').doc('achievements');
+      DocumentSnapshot userAchievement = await userAchievementRef.get();
+      final Map<String, dynamic> data = userAchievement.data() as Map<String, dynamic>;
+
+      if (userAchievement.exists) {
+        await userAchievementRef.set({
+          'Learner': (learnedWords >= 100)? true : data['Learner'],
+          'Scholar': (learnedWords >= 250)? true : data['Scholar'],
+          'word_master': (learnedWords >= 500)? true : data['word_master'],
+          '7_day_streak': (learningStreak >= 2)? true : data['7_day_streak'],
+          '14_day_streak': (learningStreak >= 14)? true : data['14_day_streak'],
+          '21_day_streak': (learningStreak >= 21)? true : data['21_day_streak'],
+          'quiz_master': (quizzesTaken >= 5)? true : data['quiz_master'],
+          'quiz_champion': (quizzesTaken >= 20)? true : data['quiz_champion'],
+          'quiz_legend': (quizzesTaken >= 50)? true : data['quiz_legend'],
+          'question_novice': (questionsAnsweredCorrectly >=50)? true : data['question_novice'],
+          'question_expert': (questionsAnsweredCorrectly >= 200)? true : data['question_expert'],
+          'question_master': (questionsAnsweredCorrectly >= 500)? true : data['question_master'],
+          'question_legend': (questionsAnsweredCorrectly >= 1000)? true : data['question_legend'],
+          'regular_user': (loginStreak >= 7)? true : data['regular_user'],
+          'dedicated_user': (loginStreak >= 30)? true : data['dedicated_user'],
+          'committed_user': (loginStreak >= 100)? true : data['committed_user'],
+          'achievement_points': data['achievement_points'],
+        });
+
+      DocumentReference leaderboardRef = _db.collection('leaderboard').doc(user.email);
+      DocumentSnapshot leaderboard = await leaderboardRef.get();
+      if (leaderboard.exists) {
+        await leaderboardRef.set({
+          'userId': user.uid,
+          'email': user.email,
+          'learnedWords': learnedWords,
+          'totalScore': questionsAnsweredCorrectly,
+          'totalQuestions': totalQuestions,
+          'achievemntPoints': await getAchievementsPoints(user.uid),
+        });
+        
+      } 
+    
+      } else {
+        
+      }
+
     } else {
       throw Exception('No user is currently signed in.');
     }
@@ -470,55 +552,40 @@ class FirestoreService {
 
   Future<List<Map<String, dynamic>>> getAchievements() async {
     User? user = _auth.currentUser;
-    if (user != null) {
-      final DocumentSnapshot streakDoc = await _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak').get();
-      QuerySnapshot quizSnapshot = await _db.collection('users').doc(user.uid).collection('quiz_results').get();
-      List<QueryDocumentSnapshot> quizDocs = quizSnapshot.docs;
-      QuerySnapshot learnedWordsSnapshot = await _db.collection('users').doc(user.uid).collection('memorized').get();
-      DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).collection('user_data').doc('last_login').get();
+    if (user != null) {      
       DocumentSnapshot adminDoc = await _db.collection('users').doc(user.uid).collection('user_data').doc('admin_status').get();
-
-      int learnedWords = 0;
-      int quizzesTaken = 0;
-
-      learnedWords = learnedWordsSnapshot.size;
-      quizzesTaken = quizSnapshot.size;
-      int loginStreak = userDoc.exists ? userDoc['loginStreak'] : 0;
-      int learningStreak = streakDoc.exists ? streakDoc['longest_streak'] : 0;
       bool isAdmin = adminDoc.exists ? adminDoc['isAdmin'] : false;
-      int questionsAnsweredCorrectly = 0;
 
-      for (var doc in quizDocs) {
-        int score = doc['score'];
-        questionsAnsweredCorrectly += score;
-      }
+      DocumentReference userAchievementRef = _db.collection('users').doc(user.uid).collection('user_data').doc('achievements');
+      DocumentSnapshot userAchievement = await userAchievementRef.get();
+      final Map<String, dynamic> data = userAchievement.data() as Map<String, dynamic>;
 
       List<Map<String, dynamic>> achievements = [];
 
 // Learning achievements
 achievements.add({
   'title': 'Learner',
-  'description': 'Learned 10 words',
+  'description': 'Learned 100 words',
   'icon': Icons.book,
   'color': Colors.blue,
-  'acquired': isAdmin? true : learnedWords >= 10,
-  'points': 10, // Easy
+  'acquired': isAdmin? true : data['Learner'],
+  'points': 50, // Easy
 });
 achievements.add({
   'title': 'Scholar',
-  'description': 'Learned 50 words',
+  'description': 'Learned 250 words',
   'icon': Icons.school,
   'color': Colors.green,
-  'acquired': isAdmin? true : learnedWords >= 50,
-  'points': 50, // Medium
+  'acquired': isAdmin? true : data['Scholar'],
+  'points': 100, // Medium
 });
 achievements.add({
   'title': 'Word Master',
-  'description': 'Learned 100 words',
+  'description': 'Learned 500 words',
   'icon': Icons.library_books,
   'color': Colors.teal,
-  'acquired': isAdmin? true : learnedWords >= 100,
-  'points': 100, // Hard
+  'acquired': isAdmin? true : data['word_master'],
+  'points': 200, // Hard
 });
 
 // 7-Day Streak Achievement
@@ -527,7 +594,7 @@ achievements.add({
   'description': 'Learned for 7 consecutive days',
   'icon': Icons.calendar_today,
   'color': Colors.blue,
-  'acquired': isAdmin? true : learningStreak >= 7,
+  'acquired': isAdmin? true : data['7_day_streak'],
   'points': 10, // Easy
 });
 
@@ -537,7 +604,7 @@ achievements.add({
   'description': 'Learned for 14 consecutive days',
   'icon': Icons.calendar_view_week,
   'color': Colors.orange,
-  'acquired': isAdmin? true : learningStreak >= 14,
+  'acquired': isAdmin? true : data['14_day_streak'],
   'points': 50, // Medium
 });
 
@@ -547,7 +614,7 @@ achievements.add({
   'description': 'Learned for 21 consecutive days',
   'icon': Icons.calendar_month,
   'color': Colors.purple,
-  'acquired': isAdmin? true : learningStreak >= 21,
+  'acquired': isAdmin? true : data['21_day_streak'],
   'points': 100, // Hard
 });
 
@@ -557,7 +624,7 @@ achievements.add({
   'description': 'Completed 5 quizzes',
   'icon': Icons.quiz,
   'color': Colors.orange,
-  'acquired': isAdmin? true : quizzesTaken >= 5,
+  'acquired': isAdmin? true : data['quiz_master'],
   'points': 20, // Easy
 });
 achievements.add({
@@ -565,7 +632,7 @@ achievements.add({
   'description': 'Completed 20 quizzes',
   'icon': Icons.emoji_events,
   'color': Colors.red,
-  'acquired': isAdmin? true : quizzesTaken >= 20,
+  'acquired': isAdmin? true : data['quiz_champion'],
   'points': 50, // Medium
 });
 achievements.add({
@@ -573,7 +640,7 @@ achievements.add({
   'description': 'Completed 50 quizzes',
   'icon': Icons.star,
   'color': Colors.purple,
-  'acquired': isAdmin? true : quizzesTaken >= 50,
+  'acquired': isAdmin? true : data['quiz_legend'],
   'points': 100, // Hard
 });
 
@@ -583,7 +650,7 @@ achievements.add({
   'description': 'Answered 50 questions correctly',
   'icon': Icons.question_mark,
   'color': Colors.green,
-  'acquired': isAdmin? true : questionsAnsweredCorrectly >= 50,
+  'acquired': isAdmin? true : data['question_novice'],
   'points': 30, // Easy
 });
 achievements.add({
@@ -591,7 +658,7 @@ achievements.add({
   'description': 'Answered 200 questions correctly',
   'icon': Icons.question_mark_sharp,
   'color': Colors.blue,
-  'acquired': isAdmin? true : questionsAnsweredCorrectly >= 200,
+  'acquired': isAdmin? true : data['question_expert'],
   'points': 80, // Medium
 });
 achievements.add({
@@ -599,7 +666,7 @@ achievements.add({
   'description': 'Answered 500 questions correctly',
   'icon': Icons.question_answer_outlined,
   'color': Colors.purple,
-  'acquired': isAdmin? true : questionsAnsweredCorrectly >= 500,
+  'acquired': isAdmin? true : data['question_master'],
   'points': 150, // Hard
 });
 achievements.add({
@@ -607,7 +674,7 @@ achievements.add({
   'description': 'Answered 1000 questions correctly',
   'icon': Icons.question_answer,
   'color': Color(0xFFFFD700),
-  'acquired': isAdmin? true : questionsAnsweredCorrectly >= 1000,
+  'acquired': isAdmin? true : data['question_legend'],
   'points': 300, // Very Hard
 });
 
@@ -617,7 +684,7 @@ achievements.add({
   'description': 'Logged in for 7 consecutive days',
   'icon': Icons.login,
   'color': Colors.purple,
-  'acquired': isAdmin? true : loginStreak >= 7,
+  'acquired': isAdmin? true : data['regular_user'],
   'points': 20, // Easy
 });
 achievements.add({
@@ -625,7 +692,7 @@ achievements.add({
   'description': 'Logged in for 30 consecutive days',
   'icon': Icons.star,
   'color': Colors.yellow,
-  'acquired': isAdmin? true : loginStreak >= 30,
+  'acquired': isAdmin? true : data['dedicated_user'],
   'points': 80, // Medium
 });
 achievements.add({
@@ -633,7 +700,7 @@ achievements.add({
   'description': 'Logged in for 100 consecutive days',
   'icon': Icons.verified,
   'color': Colors.blueAccent,
-  'acquired': isAdmin? true : loginStreak >= 100,
+  'acquired': isAdmin? true : data['committed_user'],
   'points': 200, // Very Hard
 });
 
@@ -647,40 +714,30 @@ achievements.add({
   // achivement point calculate
   Future<int> getAchievementsPoints(String uid) async {
   try {
-    final streakDoc = await _db.collection('users').doc(uid).collection('streaks').doc('daily_streak').get();
-    final quizSnapshot = await _db.collection('users').doc(uid).collection('quiz_results').get();
-    final learnedWordsSnapshot = await _db.collection('users').doc(uid).collection('memorized').get();
-    final userDoc = await _db.collection('users').doc(uid).collection('user_data').doc('last_login').get();
     final adminDoc = await _db.collection('users').doc(uid).collection('user_data').doc('admin_status').get();
-
-    int learnedWords = learnedWordsSnapshot.size;
-    int quizzesTaken = quizSnapshot.size;
-    int loginStreak = userDoc.exists ? userDoc['loginStreak'] : 0;
-    int learningStreak = streakDoc.exists ? streakDoc['longest_streak'] : 0;
     bool isAdmin = adminDoc.exists ? adminDoc['isAdmin'] : false;
-    int questionsAnsweredCorrectly = 0;
-    for (var doc in quizSnapshot.docs) {
-      int score = doc['score'];
-      questionsAnsweredCorrectly += score;
-    }
+
+    DocumentReference userAchievementRef = _db.collection('users').doc(uid).collection('user_data').doc('achievements');
+    DocumentSnapshot userAchievement = await userAchievementRef.get();
+    final Map<String, dynamic> data = userAchievement.data() as Map<String, dynamic>;
 
     List<Map<String, dynamic>> achievements = [
-      {'points': 10, 'acquired': isAdmin || learnedWords >= 10},
-      {'points': 50, 'acquired': isAdmin || learnedWords >= 50},
-      {'points': 100, 'acquired': isAdmin || learnedWords >= 100},
-      {'points': 10, 'acquired': isAdmin || learningStreak >= 7},
-      {'points': 50, 'acquired': isAdmin || learningStreak >= 14},
-      {'points': 100, 'acquired': isAdmin || learningStreak >= 21},
-      {'points': 20, 'acquired': isAdmin || quizzesTaken >= 5},
-      {'points': 50, 'acquired': isAdmin || quizzesTaken >= 20},
-      {'points': 100, 'acquired': isAdmin || quizzesTaken >= 50},
-      {'points': 30, 'acquired': isAdmin || questionsAnsweredCorrectly >= 50},
-      {'points': 80, 'acquired': isAdmin || questionsAnsweredCorrectly >= 200},
-      {'points': 150, 'acquired': isAdmin || questionsAnsweredCorrectly >= 500},
-      {'points': 300, 'acquired': isAdmin || questionsAnsweredCorrectly >= 1000},
-      {'points': 20, 'acquired': isAdmin || loginStreak >= 7},
-      {'points': 80, 'acquired': isAdmin || loginStreak >= 30},
-      {'points': 200, 'acquired': isAdmin || loginStreak >= 100},
+      {'points': 50, 'acquired': isAdmin || data['Learner']},
+      {'points': 100, 'acquired': isAdmin || data['Scholar']},
+      {'points': 200, 'acquired': isAdmin || data['word_master']},
+      {'points': 10, 'acquired': isAdmin || data['7_day_streak']},
+      {'points': 50, 'acquired': isAdmin || data['14_day_streak']},
+      {'points': 100, 'acquired': isAdmin || data['21_day_streak']},
+      {'points': 20, 'acquired': isAdmin || data['quiz_master']},
+      {'points': 50, 'acquired': isAdmin || data['quiz_champion']},
+      {'points': 100, 'acquired': isAdmin || data['quiz_legend']},
+      {'points': 30, 'acquired': isAdmin || data['question_novice']},
+      {'points': 80, 'acquired': isAdmin || data['question_expert']},
+      {'points': 150, 'acquired': isAdmin || data['question_master']},
+      {'points': 300, 'acquired': isAdmin || data['question_legend']},
+      {'points': 20, 'acquired': isAdmin || data['regular_user']},
+      {'points': 80, 'acquired': isAdmin || data['dedicated_user']},
+      {'points': 200, 'acquired': isAdmin || data['committed_user']},
     ];
 
     int totalPoints = 0;
@@ -691,6 +748,7 @@ achievements.add({
       totalPoints += points;
     }
   }
+
 
   return totalPoints;
   } catch (e) {
@@ -811,7 +869,6 @@ achievements.add({
       if (dailyGoalDoc.exists) {
 
       } else {
-        print('object2');
         await dailyGoalDocRef.set({
           'dailyGoal': 5,
         });
@@ -843,6 +900,48 @@ achievements.add({
     } else {
       throw Exception('No user is currently signed in.');
     }
+
+    // achievements
+    DocumentReference userAchievementRef = _db.collection('users').doc(user.uid).collection('user_data').doc('achievements');
+      DocumentSnapshot userAchievement = await userAchievementRef.get();
+      if (userAchievement.exists) {
+        
+      } else {
+        await userAchievementRef.set({
+          'Learner': false,
+          'Scholar': false,
+          'word_master': false,
+          '7_day_streak': false,
+          '14_day_streak': false,
+          '21_day_streak': false,
+          'quiz_master': false,
+          'quiz_champion': false,
+          'quiz_legend': false,
+          'question_novice': false,
+          'question_expert': false,
+          'question_master': false,
+          'question_legend': false,
+          'regular_user': false,
+          'dedicated_user': false,
+          'committed_user': false,
+          'achievement_points': 0,
+        });
+      }
+
+      DocumentReference leaderboardRef = _db.collection('leaderboard').doc(user.email);
+      DocumentSnapshot leaderboard = await leaderboardRef.get();
+      if (leaderboard.exists) {
+        
+      } else {
+        await leaderboardRef.set({
+          'userId': user.uid,
+          'email': user.email,
+          'learnedWords': 0,
+          'totalScore': 0,
+          'totalQuestions': 0,
+          'achievemntPoints': 0,
+        });
+      }
     
 
   }
@@ -851,124 +950,158 @@ achievements.add({
 
 // Leaderboard
 Future<List<Leaderboard>> getLeaderboardData() async {
-  try {
     List<Leaderboard> leaderboard = [];
     String currentUserId = _auth.currentUser?.uid ?? '';
 
     print('Starting to fetch leaderboard data...');
-    
-    // Get the users collection with error handling
-    final usersRef = _db.collection('users_data');
-    QuerySnapshot? usersSnapshot;
-    try {
-      usersSnapshot = await usersRef.get();
-    } catch (e) {
-      print('Error accessing users collection: $e');
-      return [];
-    }
 
-    if (usersSnapshot.docs.isEmpty) {
-      print('Warning: Users collection is empty');
-      return [];
-    }
+    final leaderboardRef = _db.collection('leaderboard');
+    QuerySnapshot leaderboardSnapshot = await leaderboardRef.get();
 
-    print('Successfully found ${usersSnapshot.docs.length} users');
+    print('Successfully found ${leaderboardSnapshot.docs.length} users');
 
-    for (var userDoc in usersSnapshot.docs) {
-      try {
-        String userId = userDoc['userId'] as String? ?? '';
-        print('Processing user: $userId');
+    for (var leaderboardDoc in leaderboardSnapshot.docs) {
+      final Map<String, dynamic> data = leaderboardDoc.data() as Map<String, dynamic>;
 
-        // Get user info with null checks
-        final userInfoDoc = await _db
-            .collection('users')
-            .doc(userId)
-            .collection('user_data')
-            .doc('user_info')
-            .get();
-
-        if (!userInfoDoc.exists || userInfoDoc.data() == null) {
-          print('Skipping user $userId: No valid user_info document');
-          continue;
-        }
-
-        // Get memorized words count with error handling
-        final memorizedSnapshot = await _db
-            .collection('users')
-            .doc(userId)
-            .collection('memorized')
-            .get()
-            .timeout(
-              Duration(seconds: 10),
-              onTimeout: () {
-                print('Timeout while fetching memorized words for user $userId');
-                throw TimeoutException('Failed to fetch memorized words');
-              },
-            );
-
-        // Get quiz results with error handling
-        final quizSnapshot = await _db
-            .collection('users')
-            .doc(userId)
-            .collection('quiz_results')
-            .get()
-            .timeout(
-              Duration(seconds: 10),
-              onTimeout: () {
-                print('Timeout while fetching quiz results for user $userId');
-                throw TimeoutException('Failed to fetch quiz results');
-              },
-            );
-
-        // Calculate quiz statistics
-        int totalScore = 0;
-        int totalQuestions = 0;
-        for (var quiz in quizSnapshot.docs) {
-          if (quiz.id != 'initial') {
-            Map<String, dynamic> quizData = quiz.data();
-            totalScore += quizData['score'] as int? ?? 0;
-            totalQuestions += quizData['questions'] as int? ?? 0;
-          }
-        }
-
-        Map<String, dynamic> userData = userInfoDoc.data() as Map<String, dynamic>;
-        
-        // Fetch achievements points with timeout
-        int achievementPoints =  await getAchievementsPoints(userId).timeout(
-          Duration(seconds: 10),
-          onTimeout: () {
-            print('Timeout while fetching achievement points for user $userId');
-            return 0;
-          },
-        );
-
-        leaderboard.add(Leaderboard(
-          email: userData['email'] as String? ?? 'Unknown User',
-          totalPoints: achievementPoints,
-          wordsLearned: memorizedSnapshot.size,
-          correctAnswers: totalScore,
-          questionAttended: totalQuestions,
-          owner: userId == currentUserId,
+      leaderboard.add(Leaderboard(
+          userId: data['userId'],
+          email: data['email'],
+          totalPoints: data['achievemntPoints'],
+          wordsLearned: data['learnedWords'],
+          correctAnswers: data['totalScore'],
+          questionAttended: data['totalQuestions'],
+          owner: data['userId'] == currentUserId,
         ));
 
-        print('Successfully added ${userData['email']} to leaderboard (Points: $achievementPoints)');
-      } catch (e, stackTrace) {
-        print('Error processing user ${userDoc.id}: $e');
-        print('Stack trace: $stackTrace');
-        continue;
-      }
     }
 
     // Sort by points
     leaderboard.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
     print('Successfully compiled leaderboard with ${leaderboard.length} users');
     return leaderboard;
-  } catch (e, stackTrace) {
-    print('Fatal error fetching leaderboard: $e');
-    print('Stack trace: $stackTrace');
-    return [];
-  }
+
 }
+
+
+// Future<List<Leaderboard>> getLeaderboardData() async {
+//   try {
+//     List<Leaderboard> leaderboard = [];
+//     String currentUserId = _auth.currentUser?.uid ?? '';
+
+//     print('Starting to fetch leaderboard data...');
+    
+//     // Get the users collection with error handling
+//     final usersRef = _db.collection('users_data');
+//     QuerySnapshot? usersSnapshot;
+//     try {
+//       usersSnapshot = await usersRef.get();
+//     } catch (e) {
+//       print('Error accessing users collection: $e');
+//       return [];
+//     }
+
+//     if (usersSnapshot.docs.isEmpty) {
+//       print('Warning: Users collection is empty');
+//       return [];
+//     }
+
+//     print('Successfully found ${usersSnapshot.docs.length} users');
+
+//     for (var userDoc in usersSnapshot.docs) {
+//       try {
+//         String userId = userDoc['userId'] as String? ?? '';
+//         print('Processing user: $userId');
+
+//         // Get user info with null checks
+//         final userInfoDoc = await _db
+//             .collection('users')
+//             .doc(userId)
+//             .collection('user_data')
+//             .doc('user_info')
+//             .get();
+
+//         if (!userInfoDoc.exists || userInfoDoc.data() == null) {
+//           print('Skipping user $userId: No valid user_info document');
+//           continue;
+//         }
+
+//         // Get memorized words count with error handling
+//         final memorizedSnapshot = await _db
+//             .collection('users')
+//             .doc(userId)
+//             .collection('memorized')
+//             .get()
+//             .timeout(
+//               Duration(seconds: 10),
+//               onTimeout: () {
+//                 print('Timeout while fetching memorized words for user $userId');
+//                 throw TimeoutException('Failed to fetch memorized words');
+//               },
+//             );
+
+//         // Get quiz results with error handling
+//         final quizSnapshot = await _db
+//             .collection('users')
+//             .doc(userId)
+//             .collection('quiz_results')
+//             .get()
+//             .timeout(
+//               Duration(seconds: 10),
+//               onTimeout: () {
+//                 print('Timeout while fetching quiz results for user $userId');
+//                 throw TimeoutException('Failed to fetch quiz results');
+//               },
+//             );
+
+//         // Calculate quiz statistics
+//         int totalScore = 0;
+//         int totalQuestions = 0;
+//         for (var quiz in quizSnapshot.docs) {
+//           if (quiz.id != 'initial') {
+//             Map<String, dynamic> quizData = quiz.data();
+//             totalScore += quizData['score'] as int? ?? 0;
+//             totalQuestions += quizData['questions'] as int? ?? 0;
+//           }
+//         }
+
+//         Map<String, dynamic> userData = userInfoDoc.data() as Map<String, dynamic>;
+        
+//         // Fetch achievements points with timeout
+//         int achievementPoints =  await getAchievementsPoints(userId).timeout(
+//           Duration(seconds: 10),
+//           onTimeout: () {
+//             print('Timeout while fetching achievement points for user $userId');
+//             return 0;
+//           },
+//         );
+
+//         leaderboard.add(Leaderboard(
+//           email: userData['email'] as String? ?? 'Unknown User',
+//           totalPoints: achievementPoints,
+//           wordsLearned: memorizedSnapshot.size,
+//           correctAnswers: totalScore,
+//           questionAttended: totalQuestions,
+//           owner: userId == currentUserId,
+//         ));
+
+//         print('Successfully added ${userData['email']} to leaderboard (Points: $achievementPoints)');
+//       } catch (e, stackTrace) {
+//         print('Error processing user ${userDoc.id}: $e');
+//         print('Stack trace: $stackTrace');
+//         continue;
+//       }
+//     }
+
+//     // Sort by points
+//     leaderboard.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
+//     print('Successfully compiled leaderboard with ${leaderboard.length} users');
+//     return leaderboard;
+//   } catch (e, stackTrace) {
+//     print('Fatal error fetching leaderboard: $e');
+//     print('Stack trace: $stackTrace');
+//     return [];
+//   }
+// }
 
 //   // Leaderboard
 //   Future<List<Leaderboard>> getLeaderboardData() async {

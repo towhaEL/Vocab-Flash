@@ -15,6 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   String _userEmail = '';
   bool _isLoading = true;
   late TabController _tabController;
+  String icon = 'Icon(Icons.person, size: 50)';
 
   @override
   void initState() {
@@ -23,10 +24,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _fetchUserData();
   }
 
-  Future<void> _signOut() async {
-    await _auth.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
-  }
 
   Future<void> _fetchUserData() async {
     _user = _auth.currentUser;
@@ -95,12 +92,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildTopSection() {
     return Column(
       children: [
-        ElevatedButton(
-          onPressed: _signOut,
-          child: CircleAvatar(
-            radius: 20,
-            child: Icon(Icons.person, size: 35),
-          ),
+        CircleAvatar(
+          radius: 30,
+          child: Icon(Icons.person, size: 50),
         ),
         SizedBox(height: 16),
         Text(

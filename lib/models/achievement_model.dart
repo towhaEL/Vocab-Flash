@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Leaderboard {
-  final String userId;
+class Achievement {
   final String email;
   final int totalPoints;
   final int wordsLearned;
@@ -9,8 +8,7 @@ class Leaderboard {
   final int questionAttended;
   final bool owner;
 
-  Leaderboard({
-    required this.userId,
+  Achievement({
     required this.email,
     required this.totalPoints,
     required this.wordsLearned,
@@ -19,12 +17,11 @@ class Leaderboard {
     required this.owner,
   });
 
-  // Factory method to create a Leaderboard from Firestore document
-  factory Leaderboard.fromFirestore(DocumentSnapshot doc) {
+  // Factory method to create a Achievement from Firestore document
+  factory Achievement.fromFirestore(DocumentSnapshot doc) {
     var data = doc.data() as Map<String, dynamic>;
 
-    return Leaderboard(
-      userId: data['userId'] ?? '',
+    return Achievement(
       email: data['email'] ?? '',
       totalPoints: data['totalPoints'] ?? 0,
       wordsLearned: data['wordsLearned'] ?? 0,
