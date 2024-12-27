@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:tuple/tuple.dart';
 import 'package:vocabflashcard_app/models/leaderboard_model.dart';
 import '../models/vocabulary_model.dart';
@@ -178,6 +179,63 @@ class FirestoreService {
     return snapshot.size;
   }
 
+  // daily goal
+  Future<void> setDailyGoal(int goal) async {
+    final User? user = _auth.currentUser;
+    if (user != null) {
+      final DocumentReference dailyGoalRef = _db.collection('users').doc(user.uid).collection('user_data').doc('daily_goal');
+      final DocumentSnapshot dailyGoalDoc = await dailyGoalRef.get();
+
+      await dailyGoalRef.update({
+        'dailyGoal': goal,
+      });
+
+      final QuerySnapshot streaksSnap = await _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('streaks')
+          .get();
+      for (var doc in streaksSnap.docs) {
+        await doc.reference.delete();
+      }
+    }  
+  }
+
+  Future<int> getDailyGoal() async {
+  final User? user = _auth.currentUser;
+
+  if (user == null) {
+    throw Exception("User is not logged in.");
+  }
+
+  final DocumentReference dailyGoalRef = _db
+      .collection('users')
+      .doc(user.uid)
+      .collection('user_data')
+      .doc('daily_goal');
+  
+  final DocumentSnapshot dailyGoalDoc = await dailyGoalRef.get();
+
+  if (!dailyGoalDoc.exists) {
+    throw Exception("Daily goal document does not exist.");
+  }
+
+  final data = dailyGoalDoc.data() as Map<String, dynamic>?;
+
+  if (data == null || !data.containsKey('dailygoal')) {
+    throw Exception("Daily goal not found in the document.");
+  }
+
+  final goal = data['dailygoal'];
+
+  if (goal is! int) {
+    throw Exception("Daily goal is not an integer.");
+  }
+
+  return goal;
+}
+
+
 
   // streak
   Future<void> _updateDailyWordCount(String userId, String type) async {
@@ -211,30 +269,32 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateDailyStreak() async {
-    final DateTime today = DateTime.now();
-    final DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
-    final String todayStr = '${today.year}-${today.month}-${today.day}';
-    final String yesterdayStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
 
-    final User? user = _auth.currentUser;
-    if (user != null) {
-      final DocumentReference streakRef = _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak');
+Future<void> updateDailyStreak() async {
+  final DateTime today = DateTime.now();
+  final DateTime yesterday = today.subtract(Duration(days: 1));
+  final String todayStr = DateFormat('yyyy-MM-dd').format(today);
+  final String yesterdayStr = DateFormat('yyyy-MM-dd').format(yesterday);
+
+  final User? user = _auth.currentUser;
+  if (user != null) {
+    final DocumentReference streakRef = _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak');
+    final DocumentReference wordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(todayStr);
+    final DocumentReference yesterdayWordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(yesterdayStr);
+
+    try {
       final DocumentSnapshot streakDoc = await streakRef.get();
-      final DocumentReference wordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(todayStr);
       final DocumentSnapshot wordCountDoc = await wordCountRef.get();
-      final DocumentReference yesterdayWordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(yesterdayStr);
       final DocumentSnapshot yesterdayWordCountDoc = await yesterdayWordCountRef.get();
+
+      final bool todayGoalCompleted = wordCountDoc.exists && wordCountDoc['goalCompleted'] == true;
+      final bool yesterdayGoalCompleted = yesterdayWordCountDoc.exists && yesterdayWordCountDoc['goalCompleted'] == true;
 
       if (streakDoc.exists) {
         final Map<String, dynamic> data = streakDoc.data() as Map<String, dynamic>;
-        // final DateTime lastUpdated = (data['last_updated'] as Timestamp).toDate();
-        final DateTime today = DateTime.now();
 
-        if (data['last_updated'] != todayStr && wordCountDoc['goalCompleted'] == true) {
-          if (yesterdayWordCountDoc['goalCompleted'] == true ) {
-            // Increment current streak
-          int currentStreak = data['current_streak'] + 1;
+        if (data['last_updated'] != todayStr && todayGoalCompleted) {
+          int currentStreak = yesterdayGoalCompleted ? data['current_streak'] + 1 : 1;
           int longestStreak = data['longest_streak'];
 
           if (currentStreak > longestStreak) {
@@ -246,36 +306,91 @@ class FirestoreService {
             'longest_streak': longestStreak,
             'last_updated': todayStr,
           });
-          } else {
-            // Reset current streak
-          await streakRef.update({
-            'current_streak': 1,
-            'last_updated': today,
-          });
-
-          }
-        } else {
-          // Reset current streak
-          await streakRef.update({
-            'current_streak': 1,
-            'last_updated': today,
-          });
         }
       } else {
         // Initialize streak document
-            if (wordCountDoc['goalCompleted']) {
-              await streakRef.set({
-              'current_streak': 1,
-              'longest_streak': 1,
-              'last_updated': todayStr,
-            });
-        }    
+        if (todayGoalCompleted) {
+          await streakRef.set({
+            'current_streak': 1,
+            'longest_streak': 1,
+            'last_updated': todayStr,
+          });
+        }
       }
 
-      updateAchievements();
-
+      updateAchievements(); // Call the function to update achievements.
+    } catch (e) {
+      print('Error updating streak: $e');
     }
   }
+}
+
+
+  // Future<void> updateDailyStreak() async {
+  //   final DateTime today = DateTime.now();
+  //   final DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+  //   final String todayStr = '${today.year}-${today.month}-${today.day}';
+  //   final String yesterdayStr = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
+
+  //   final User? user = _auth.currentUser;
+  //   if (user != null) {
+  //     final DocumentReference streakRef = _db.collection('users').doc(user.uid).collection('streaks').doc('daily_streak');
+  //     final DocumentSnapshot streakDoc = await streakRef.get();
+  //     final DocumentReference wordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(todayStr);
+  //     final DocumentSnapshot wordCountDoc = await wordCountRef.get();
+  //     final DocumentReference yesterdayWordCountRef = _db.collection('users').doc(user.uid).collection('daily_word_count').doc(yesterdayStr);
+  //     final DocumentSnapshot yesterdayWordCountDoc = await yesterdayWordCountRef.get();
+
+  //     if (streakDoc.exists) {
+  //       final Map<String, dynamic> data = streakDoc.data() as Map<String, dynamic>;
+  //       // final DateTime lastUpdated = (data['last_updated'] as Timestamp).toDate();
+  //       final DateTime today = DateTime.now();
+
+  //       if (data['last_updated'] != todayStr && wordCountDoc['goalCompleted'] == true) {
+  //         if (yesterdayWordCountDoc['goalCompleted'] == true ) {
+  //           // Increment current streak
+  //         int currentStreak = data['current_streak'] + 1;
+  //         int longestStreak = data['longest_streak'];
+
+  //         if (currentStreak > longestStreak) {
+  //           longestStreak = currentStreak;
+  //         }
+
+  //         await streakRef.update({
+  //           'current_streak': currentStreak,
+  //           'longest_streak': longestStreak,
+  //           'last_updated': todayStr,
+  //         });
+  //         } else {
+  //           // Reset current streak
+  //         await streakRef.update({
+  //           'current_streak': 1,
+  //           'last_updated': today,
+  //         });
+
+  //         }
+  //       } else {
+  //         // Reset current streak
+  //         await streakRef.update({
+  //           'current_streak': 1,
+  //           'last_updated': today,
+  //         });
+  //       }
+  //     } else {
+  //       // Initialize streak document
+  //           if (wordCountDoc['goalCompleted']) {
+  //             await streakRef.set({
+  //             'current_streak': 1,
+  //             'longest_streak': 1,
+  //             'last_updated': todayStr,
+  //           });
+  //       }    
+  //     }
+
+  //     updateAchievements();
+
+  //   }
+  // }
 
 
   // Future<void> updateDailyStreak() async {
@@ -757,56 +872,6 @@ achievements.add({
 }
 
 
-//   Future<int> getAchievementsPoints(String uid) async {
-//   final streakDoc = await _db.collection('users').doc(uid).collection('streaks').doc('daily_streak').get();
-//   final quizSnapshot = await _db.collection('users').doc(uid).collection('quiz_results').get();
-//   final learnedWordsSnapshot = await _db.collection('users').doc(uid).collection('memorized').get();
-//   final userDoc = await _db.collection('users').doc(uid).collection('user_data').doc('last_login').get();
-//   final adminDoc = await _db.collection('users').doc(uid).collection('user_data').doc('admin_status').get();
-
-//   int learnedWords = learnedWordsSnapshot.size;
-//   int quizzesTaken = quizSnapshot.size;
-//   int loginStreak = userDoc['loginStreak'];
-//   int learningStreak = streakDoc['longest_streak'];
-//   bool isAdmin = adminDoc['isAdmin'];
-//   int questionsAnsweredCorrectly = 0;
-//     for (var doc in quizSnapshot.docs) {
-//       int score = doc['score'];
-//       questionsAnsweredCorrectly += score;
-//     }
-
-//   List<Map<String, dynamic>> achievementsPoint = [
-//     {'points': 10, 'acquired': isAdmin || learnedWords >= 10},
-//     {'points': 50, 'acquired': isAdmin || learnedWords >= 50},
-//     {'points': 100, 'acquired': isAdmin || learnedWords >= 100},
-//     {'points': 10, 'acquired': isAdmin || learningStreak >= 7},
-//     {'points': 50, 'acquired': isAdmin || learningStreak >= 14},
-//     {'points': 100, 'acquired': isAdmin || learningStreak >= 21},
-//     {'points': 20, 'acquired': isAdmin || quizzesTaken >= 5},
-//     {'points': 50, 'acquired': isAdmin || quizzesTaken >= 20},
-//     {'points': 100, 'acquired': isAdmin || quizzesTaken >= 50},
-//     {'points': 30, 'acquired': isAdmin || questionsAnsweredCorrectly >= 50},
-//     {'points': 80, 'acquired': isAdmin || questionsAnsweredCorrectly >= 200},
-//     {'points': 150, 'acquired': isAdmin || questionsAnsweredCorrectly >= 500},
-//     {'points': 300, 'acquired': isAdmin || questionsAnsweredCorrectly >= 1000},
-//     {'points': 20, 'acquired': isAdmin || loginStreak >= 7},
-//     {'points': 80, 'acquired': isAdmin || loginStreak >= 30},
-//     {'points': 200, 'acquired': isAdmin || loginStreak >= 100},
-//   ];
-
-//   int totalPoints = 0;
-
-//   for (var achievement in achievementsPoint) {
-//     if(achievement['acquired']) {
-//       int points = achievement['points'];
-//       totalPoints += points;
-//     }
-//   }
-
-//   return totalPoints;
-// }
-
-
 
   // Easter egg
   Future<void> setAdmin() async {
@@ -966,7 +1031,7 @@ Future<List<Leaderboard>> getLeaderboardData() async {
       leaderboard.add(Leaderboard(
           userId: data['userId'],
           email: data['email'],
-          totalPoints: data['achievemntPoints'],
+          totalPoints: await getAchievementsPoints(data['userId']),
           wordsLearned: data['learnedWords'],
           correctAnswers: data['totalScore'],
           questionAttended: data['totalQuestions'],
@@ -981,193 +1046,6 @@ Future<List<Leaderboard>> getLeaderboardData() async {
     return leaderboard;
 
 }
-
-
-// Future<List<Leaderboard>> getLeaderboardData() async {
-//   try {
-//     List<Leaderboard> leaderboard = [];
-//     String currentUserId = _auth.currentUser?.uid ?? '';
-
-//     print('Starting to fetch leaderboard data...');
-    
-//     // Get the users collection with error handling
-//     final usersRef = _db.collection('users_data');
-//     QuerySnapshot? usersSnapshot;
-//     try {
-//       usersSnapshot = await usersRef.get();
-//     } catch (e) {
-//       print('Error accessing users collection: $e');
-//       return [];
-//     }
-
-//     if (usersSnapshot.docs.isEmpty) {
-//       print('Warning: Users collection is empty');
-//       return [];
-//     }
-
-//     print('Successfully found ${usersSnapshot.docs.length} users');
-
-//     for (var userDoc in usersSnapshot.docs) {
-//       try {
-//         String userId = userDoc['userId'] as String? ?? '';
-//         print('Processing user: $userId');
-
-//         // Get user info with null checks
-//         final userInfoDoc = await _db
-//             .collection('users')
-//             .doc(userId)
-//             .collection('user_data')
-//             .doc('user_info')
-//             .get();
-
-//         if (!userInfoDoc.exists || userInfoDoc.data() == null) {
-//           print('Skipping user $userId: No valid user_info document');
-//           continue;
-//         }
-
-//         // Get memorized words count with error handling
-//         final memorizedSnapshot = await _db
-//             .collection('users')
-//             .doc(userId)
-//             .collection('memorized')
-//             .get()
-//             .timeout(
-//               Duration(seconds: 10),
-//               onTimeout: () {
-//                 print('Timeout while fetching memorized words for user $userId');
-//                 throw TimeoutException('Failed to fetch memorized words');
-//               },
-//             );
-
-//         // Get quiz results with error handling
-//         final quizSnapshot = await _db
-//             .collection('users')
-//             .doc(userId)
-//             .collection('quiz_results')
-//             .get()
-//             .timeout(
-//               Duration(seconds: 10),
-//               onTimeout: () {
-//                 print('Timeout while fetching quiz results for user $userId');
-//                 throw TimeoutException('Failed to fetch quiz results');
-//               },
-//             );
-
-//         // Calculate quiz statistics
-//         int totalScore = 0;
-//         int totalQuestions = 0;
-//         for (var quiz in quizSnapshot.docs) {
-//           if (quiz.id != 'initial') {
-//             Map<String, dynamic> quizData = quiz.data();
-//             totalScore += quizData['score'] as int? ?? 0;
-//             totalQuestions += quizData['questions'] as int? ?? 0;
-//           }
-//         }
-
-//         Map<String, dynamic> userData = userInfoDoc.data() as Map<String, dynamic>;
-        
-//         // Fetch achievements points with timeout
-//         int achievementPoints =  await getAchievementsPoints(userId).timeout(
-//           Duration(seconds: 10),
-//           onTimeout: () {
-//             print('Timeout while fetching achievement points for user $userId');
-//             return 0;
-//           },
-//         );
-
-//         leaderboard.add(Leaderboard(
-//           email: userData['email'] as String? ?? 'Unknown User',
-//           totalPoints: achievementPoints,
-//           wordsLearned: memorizedSnapshot.size,
-//           correctAnswers: totalScore,
-//           questionAttended: totalQuestions,
-//           owner: userId == currentUserId,
-//         ));
-
-//         print('Successfully added ${userData['email']} to leaderboard (Points: $achievementPoints)');
-//       } catch (e, stackTrace) {
-//         print('Error processing user ${userDoc.id}: $e');
-//         print('Stack trace: $stackTrace');
-//         continue;
-//       }
-//     }
-
-//     // Sort by points
-//     leaderboard.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
-//     print('Successfully compiled leaderboard with ${leaderboard.length} users');
-//     return leaderboard;
-//   } catch (e, stackTrace) {
-//     print('Fatal error fetching leaderboard: $e');
-//     print('Stack trace: $stackTrace');
-//     return [];
-//   }
-// }
-
-//   // Leaderboard
-//   Future<List<Leaderboard>> getLeaderboardData() async {
-//   List<Leaderboard> leaderboard = [];
-
-//   // Fetch all users from the 'users' collection
-//   QuerySnapshot userSnapshot = await _db.collection('users').get();
-
-//   // Get the current logged-in user's ID
-//   User? currentUser = _auth.currentUser;
-//   String currentUserId = currentUser!.uid;
-//   print('object2');
-
-//   print('Number of documents fetched: ${userSnapshot.docs.length}');
-
-
-//   userSnapshot.docs.forEach((doc) {
-//     print('11object');
-//   });
-
-
-//   // Iterate over each user document
-//   for (var userDoc in userSnapshot.docs) {
-//     String userId = userDoc.id;
-//     print(userId);
-
-//     // Get the size of the 'memorized' collection for the current user (words learned)
-//     QuerySnapshot memorizedSnapshot = await _db.collection('users').doc(userId).collection('memorized').get();
-//     int wordsLearned = memorizedSnapshot.size;
-
-//     // Fetch quiz results and calculate total score and questions attended
-//     QuerySnapshot quizSnapshot = await _db.collection('users').doc(userId).collection('quiz_results').get();
-//     int totalScore = 0;
-//     int totalQuestions = 0;
-
-//     for (var quizDoc in quizSnapshot.docs) {
-//       int ts = quizDoc['score'];
-//       int tq = quizDoc['questions'];
-//       totalScore += ts;
-//       totalQuestions += tq;
-//     }
-
-//     // Get user email
-//     DocumentReference userDocRef = _db.collection('users').doc(userId).collection('user_data').doc('user_info');
-//     DocumentSnapshot userDataDoc = await userDocRef.get();
-
-//     // Get total points
-//     int totalPoints = 0;
-//     totalPoints = await getAchievementsPoints(userId);
-
-//     // Create Leaderboard object for this user
-//     leaderboard.add(Leaderboard(
-//       email: userDataDoc['email'] ?? 'Unknown',
-//       totalPoints: totalPoints,
-//       wordsLearned: wordsLearned,
-//       correctAnswers: totalScore,
-//       questionAttended: totalQuestions,
-//       owner: userId == currentUserId, // Check if this is the current user
-//     ));
-//   }
-
-//   // Sort leaderboard by total points (or change to another criteria)
-//   leaderboard.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
-
-//   return leaderboard;
-// }
 
 
 // Account settings
@@ -1229,14 +1107,6 @@ Future<void> resetAccount(BuildContext context, password) async {
         await doc.reference.delete();
       }
 
-      // final QuerySnapshot user_data = await _db
-      //     .collection('users')
-      //     .doc(user.uid)
-      //     .collection('user_data')
-      //     .get();
-      // for (var doc in user_data.docs) {
-      //   await doc.reference.delete();
-      // }
       Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Account Progress is completely removed!')),
@@ -1259,43 +1129,39 @@ Future<void> resetAccount(BuildContext context, password) async {
     String currentUser = user!.uid;
     String _userEmail = user.email!;
 
-    if (user != null) {
-      // Reauthenticate user
-      AuthCredential credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: password,
-      );
+    // Reauthenticate user
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
 
-      await user.reauthenticateWithCredential(credential);
+    await user.reauthenticateWithCredential(credential);
 
-      // Delete Firestore data
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+    // Delete Firestore data
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
 
-      // Delete Auth account
-      await user.delete();
+    // Delete Auth account
+    await user.delete();
 
-      // Optional: Delete other related collections if needed
-      CollectionReference usersCollection = FirebaseFirestore.instance.collection('users_data');
-      QuerySnapshot querySnapshot = await usersCollection
-      .where('email', isEqualTo: _userEmail) // Check for existing email
-      .get();
+    // Optional: Delete other related collections if needed
+    CollectionReference usersCollection = FirebaseFirestore.instance.collection('users_data');
+    QuerySnapshot querySnapshot = await usersCollection
+    .where('email', isEqualTo: _userEmail) // Check for existing email
+    .get();
 
-      for (var doc in querySnapshot.docs) {
-        await doc.reference.delete();
-      }
-
-      //
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account deleted successfully.')),
-      );
-
-      Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
-      // Navigate to login or welcome screen
-      Navigator.of(context).pushReplacementNamed('/login');
-    } else {
-      throw Exception('User is not logged in.');
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
     }
-  } catch (e) {
+
+    //
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Account deleted successfully.')),
+    );
+
+    Navigator.of(context, rootNavigator: true).pop(); // Close any active dialogs
+    // Navigate to login or welcome screen
+    Navigator.of(context).pushReplacementNamed('/login');
+    } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error: ${e.toString()}')),
     );

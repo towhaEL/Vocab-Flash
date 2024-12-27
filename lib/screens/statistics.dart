@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class _StatisticsState extends State<Statistics> {
   int _quizAttempted = 0;
   int _highScore = 0;
   int _maxQues = 0;
+  int dailyGoal = 0;
 
   double _averageScore = 0.0;
 
@@ -48,6 +50,7 @@ class _StatisticsState extends State<Statistics> {
     User? user = _auth.currentUser;
     if (user != null) {
       int totalWords = await _firestoreService.getTotalWords();
+      // int daily_goal = await _firestoreService.getDailyGoal();
       int memorizedWords = await _firestoreService.getLearnedWords(user.uid);
       int viewedWords = await _firestoreService.getViewedWords(user.uid);
       Map<String, dynamic> streaks = await _firestoreService.getStreaks();
@@ -74,6 +77,7 @@ class _StatisticsState extends State<Statistics> {
 
       setState(() {
         _totalWords = totalWords;
+        // dailyGoal = daily_goal;
         _memorizedWords = memorizedWords;
         _viewedWords = viewedWords;
         _currentStreak = streaks['current_streak'];
@@ -86,6 +90,76 @@ class _StatisticsState extends State<Statistics> {
         _isLoading = false;
       });
     }
+  }
+
+  void _dailyGoal() {
+    final TextEditingController _passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Set Daily Goal'),
+        content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Enter your daily goal for learning new words",
+                    // style: TextStyle(color: Colors.black),
+                  ),
+                  TextSpan(
+                    text: "\nYour streak will reset.",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  // TextSpan(
+                  //   text: "\n\nCurrent goal: $dailyGoal words per day",
+                  // ),
+                ],
+              ),
+            ),
+          SizedBox(height: 10.0),
+          TextField(
+              controller: _passwordController,
+              keyboardType: TextInputType.number, // Set the keyboard type to numbers only
+              inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly, // Allow only numeric input
+              ],
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Daily goal',
+              ),
+          ),
+        ],
+      ),
+        actions: [
+          TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            final password = _passwordController.text;
+            if (password.isNotEmpty) {
+              await _firestoreService.setDailyGoal(int.parse(password));
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Daily goal updated!')),
+              );
+               // Call delete logic
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Input is not correct!')),
+              );
+            }
+          },
+          child: Text('Submit'),
+        ),
+        ],
+      ),
+    );
   }
 
   Color mixColorsFromInts(Color color1, Color color2, int value1, int value2) {
@@ -297,11 +371,21 @@ class _StatisticsState extends State<Statistics> {
       children: [
         Row(
           children: [
-            Text('Daily Goal ', style: Theme.of(context).textTheme.headlineSmall),
-            Icon(Icons.check_circle)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Daily Goal ', style: Theme.of(context).textTheme.headlineSmall),
+            ),
+            Icon(Icons.check_circle),
+            Spacer(),
+            ElevatedButton(
+              onPressed: () {
+                _dailyGoal();
+              },
+              child: Text('Set Daily Goal')
+              )
           ],
         ),
-        SizedBox(height: 16),
+        SizedBox(height: 8),
         _buildWeeklyCalendar(),
         SizedBox(height: 16),
         Row(

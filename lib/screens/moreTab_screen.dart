@@ -102,7 +102,7 @@ class _MoreTabScreenState extends State<MoreTabScreen> {
               );
             }
           },
-          child: Text('Delete'),
+          child: Text('Reset'),
         ),
         ],
       ),
