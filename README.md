@@ -69,10 +69,9 @@ A feature-rich mobile application designed to help users enhance their vocabular
    git clone https://github.com/yourusername/vocabulary-flashcard-app.git
 
 2. Navigate to the project directory:
-
-```bash
-cd vocabulary-flashcard-app
-'''
+   ```bash
+   cd 
+vocabulary-flashcard-app
 
 
 3. Install dependencies:
