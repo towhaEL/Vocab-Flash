@@ -70,18 +70,17 @@ A feature-rich mobile application designed to help users enhance their vocabular
 
 2. Navigate to the project directory:
    ```bash
-   cd 
-vocabulary-flashcard-app
+   cd vocabulary-flashcard-app
 
 
 3. Install dependencies:
-
-flutter pub get
+   ```bash
+   flutter pub get
 
 
 4. Set up Firebase:
-
-Create a Firebase project at Firebase Console.
+   ```bash
+   Create a Firebase project at Firebase Console.
 
 Add your app to the Firebase project.
 
@@ -92,8 +91,8 @@ Enable Authentication and Firestore in your Firebase project.
 
 
 5. Run the app:
-
-flutter run
+   ```bash
+   flutter run
 
 
 
@@ -130,18 +129,18 @@ Contributions are welcome!
 
 
 2. Create a feature branch:
-
-git checkout -b feature-name
+   ```bash
+   git checkout -b feature-name
 
 
 3. Commit your changes:
-
-git commit -m "Add feature-name"
+   ```bash
+   git commit -m "Add feature-name"
 
 
 4. Push to the branch:
-
-git push origin feature-name
+   ```bash
+   git push origin feature-name
 
 
 5. Submit a pull request.
