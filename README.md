@@ -70,6 +70,7 @@ A feature-rich mobile application designed to help users enhance their vocabular
 
 2. Navigate to the project directory:
 
+```bash
 cd vocabulary-flashcard-app
 
 
