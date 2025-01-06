@@ -72,6 +72,7 @@ A feature-rich mobile application designed to help users enhance their vocabular
 
 ```bash
 cd vocabulary-flashcard-app
+'''
 
 
 3. Install dependencies:
