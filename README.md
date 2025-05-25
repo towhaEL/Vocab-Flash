@@ -1,8 +1,8 @@
-# VocabularyVerse: Master Your Words - A Flutter Language Learning Companion 🚀
+# VocabFlash: Master Your Words - A Flutter Language Learning Companion 🚀
 
 ## Overview
 
-VocabularyVerse is a modern, intuitive Flutter mobile application designed to empower language learners by providing a dynamic and personalized platform for vocabulary acquisition and practice. Built with a focus on user engagement and seamless performance, this app transforms the journey of expanding your lexicon into an enjoyable and rewarding experience.
+VocabFlash is a modern, intuitive Flutter mobile application designed to empower language learners by providing a dynamic and personalized platform for vocabulary acquisition and practice. Built with a focus on user engagement and seamless performance, this app transforms the journey of expanding your lexicon into an enjoyable and rewarding experience.
 
 ---
 
@@ -65,7 +65,7 @@ VocabularyVerse is a modern, intuitive Flutter mobile application designed to em
 
 ## Getting Started
 
-To get started with VocabularyVerse locally, follow these steps:
+To get started with VocabFlash locally, follow these steps:
 
 1.  **Clone the repository**:
     ```bash
@@ -90,7 +90,7 @@ To get started with VocabularyVerse locally, follow these steps:
 
 ## Contributing
 
-We welcome contributions to VocabularyVerse! If you'd like to contribute, please fork the repository and create a pull request with your changes. See our `CONTRIBUTING.md` for more details.
+We welcome contributions to VocabFlash! If you'd like to contribute, please fork the repository and create a pull request with your changes. See our `CONTRIBUTING.md` for more details.
 
 ---
 
