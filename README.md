@@ -51,7 +51,7 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
     * **Customizable Interface**: Toggle between light and dark modes for optimal viewing comfort.
     * **Dedicated Support**: Access a comprehensive FAQ section and direct contact support. Options to reset progress or delete your account are also available.
     * **Screenshot**:
-        ![Settings Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/settings.png) *(Replace with actual image path)*
+        ![Settings Screen] (https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/settings.jpg) 
 
 ---
 
