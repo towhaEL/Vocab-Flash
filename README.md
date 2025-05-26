@@ -8,6 +8,10 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
 
 ## 🖼️ App Demo
 
+
+https://github.com/user-attachments/assets/b89b2da2-8c0e-42c1-9d22-b9bb323550a4
+
+
 <p align="center">
   <img src="https://github.com/towhaEL/Vocab-Flash/blob/main/assets/feature_flow1.mp4" alt="AgriPlant App Demo" width="500"/>
   <!-- Replace 'feature_flow.gif' with your actual demo filename -->
