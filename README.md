@@ -14,7 +14,7 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
     * **Effortless Progression**: Navigate through words with simple swipes; mark words as 'viewed' or 'learned' to track your progress.
     * **Personalized Study**: Easily add challenging words to your favorites and enhance pronunciation skills with integrated text-to-speech functionality.
     * **Screenshot**:
-        ![Flashcards Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/flashcards.png) *(Replace with actual image path)*
+        ![Flashcards Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/flashcards.jpg)
 
 ### Practice & Perfect 📝
 
@@ -22,7 +22,7 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
     * **Customized Challenges**: Tailor your practice sessions by selecting specific letter categories, adjusting the number of questions, and setting difficulty levels.
     * **Performance Tracking**: Your quiz results are meticulously saved in Firestore, allowing you to monitor your improvement over time.
     * **Screenshot**:
-        ![Practice Quiz Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/practice_quiz.png) *(Replace with actual image path)*
+        ![Practice Quiz Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/practice_quiz.jpg)
 
 ### Motivate & Track 📈
 
@@ -30,18 +30,17 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
     * **Global Standings**: See how you rank among all users, with your position highlighted on the global leaderboard.
     * **Friendly Rivalry**: Connect with friends, add them to your network, and compare your vocabulary mastery scores directly.
     * **Screenshot**:
-        ![Leaderboards Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/leaderboards.png) *(Replace with actual image path)*
+        ![Leaderboards Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/leaderboards.jpg)
 * **Rewarding Achievements**: Celebrate every milestone in your language journey by unlocking achievements.
     * **Unlock Milestones**: Earn achievements for various accomplishments, including words learned, quizzes completed, daily streaks, and perfect quiz scores.
-    * **Point System**: Gain points based on the difficulty of words mastered and challenges overcome, visually unlocking new achievements.
-    * **Screenshot**:
-        ![Achievements Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/achievements.jpg) *(Replace with actual image path)*
+    * **Point System**: Gain points based on the difficulty of words mastered and challenges overcome, visually unlocking new achievements
+      
 * **Comprehensive Profile**: Your personal hub for tracking language growth.
     * **Customizable Identity**: Personalize your profile with an editable picture and name.
     * **Detailed Statistics**: Gain insights into your learning with data on words learned, quizzes completed, and average scores.
     * **Visual Progress**: Maintain your learning momentum with a daily streak tracker, visually represented on a weekly calendar.
     * **Screenshot**:
-        ![User Profile Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/user_profile.png) *(Replace with actual image path)*
+        ![User Profile Screen] & ![Achievements Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/achievements.jpg) 
 
 ### Seamless Experience ✨
 
