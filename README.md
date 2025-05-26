@@ -35,7 +35,7 @@ VocabFlash is a modern, intuitive Flutter mobile application designed to empower
     * **Unlock Milestones**: Earn achievements for various accomplishments, including words learned, quizzes completed, daily streaks, and perfect quiz scores.
     * **Point System**: Gain points based on the difficulty of words mastered and challenges overcome, visually unlocking new achievements.
     * **Screenshot**:
-        ![Achievements Screen](https://github.com/yourusername/yourrepo/raw/main/screenshots/achievements.png) *(Replace with actual image path)*
+        ![Achievements Screen](https://github.com/towhaEL/Vocab-Flash/blob/main/assets/screenshots/achievements.jpg) *(Replace with actual image path)*
 * **Comprehensive Profile**: Your personal hub for tracking language growth.
     * **Customizable Identity**: Personalize your profile with an editable picture and name.
     * **Detailed Statistics**: Gain insights into your learning with data on words learned, quizzes completed, and average scores.
